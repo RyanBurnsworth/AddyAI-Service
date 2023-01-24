@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @Getter
 @Setter
-@Document("Campaign")
+@Document("Campaign_Details")
 public class CampaignDocument {
     @Id
     private String id;

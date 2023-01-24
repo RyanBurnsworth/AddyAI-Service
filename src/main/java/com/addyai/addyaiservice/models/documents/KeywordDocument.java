@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @NoArgsConstructor
-@Document
+@Document("Keyword_Details")
 public class KeywordDocument {
     @Id
     private String id;

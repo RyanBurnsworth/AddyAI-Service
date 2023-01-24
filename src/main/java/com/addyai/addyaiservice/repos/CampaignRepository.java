@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface CampaignRepository extends MongoRepository<CampaignDocument, String> {
     @Query("{'customerId': '?0'}")
-    List<CampaignDocument> findAllCampaignsByCustomerId(String customerId);
+    List<CampaignDocument> findAllCampaignDocumentsByCustomerId(String customerId);
 
     @Query("{'customerId' : ?0, 'campaignDetails.campaignName' : ?1}")
-    CampaignDocument findCampaignByName(String customerId, String campaignName);
+    CampaignDocument findCampaignDocumentByName(String customerId, String campaignName);
 }

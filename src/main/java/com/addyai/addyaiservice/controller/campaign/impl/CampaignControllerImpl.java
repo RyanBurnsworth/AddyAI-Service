@@ -1,11 +1,14 @@
-package com.addyai.addyaiservice.controller;
+package com.addyai.addyaiservice.controller.campaign.impl;
 
+import com.addyai.addyaiservice.controller.campaign.CampaignController;
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.services.CampaignService;
+import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.services.campaign.CampaignService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -16,13 +19,6 @@ public class CampaignControllerImpl implements CampaignController {
 
     public CampaignControllerImpl(CampaignService campaignService) {
         this.campaignService = campaignService;
-    }
-
-    @Override
-    @PostMapping("update/cache/all")
-    public ResponseEntity<Void> updateCache(@PathVariable String customerId) {
-        campaignService.fetchAndUpdateCache(customerId);
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @Override
@@ -39,5 +35,11 @@ public class CampaignControllerImpl implements CampaignController {
                                                                @RequestParam String campaignName) {
         CampaignDetails campaignDetails = campaignService.fetchCampaignDetailsByName(customerId, campaignName);
         return new ResponseEntity<>(campaignDetails, HttpStatus.OK);
+    }
+
+    @Override
+    @GetMapping("campaign-metrics-range")
+    public ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignResourceName, String startDate, String endDate) throws ParseException {
+        return new ResponseEntity<>(campaignService.fetchMetricsByDateRange(customerId, campaignResourceName, startDate, endDate), HttpStatus.OK);
     }
 }
