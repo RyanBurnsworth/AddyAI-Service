@@ -1,39 +1,48 @@
 package com.addyai.addyaiservice.services;
 
-import com.addyai.addyaiservice.exception.DatabaseException;
-import com.addyai.addyaiservice.exception.GAMSException;
+import com.addyai.addyaiservice.exception.ApiExceptionResolver;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
 import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.error.DatabaseError;
+import com.addyai.addyaiservice.models.error.GamsError;
 import com.addyai.addyaiservice.repos.CampaignMetricsRepository;
 import com.addyai.addyaiservice.repos.CampaignRepository;
-import org.springframework.http.HttpStatus;
+import com.addyai.addyaiservice.repos.DatabaseErrorRepository;
+import com.addyai.addyaiservice.repos.GAMSErrorRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class CachingServiceImpl implements CachingService {
     private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
     private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy?campaignId=";
+    private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
     private final static String START_DATE_POST_FIX = "&startDate=";
     private final static String END_DATE_POST_FIX = "&endDate=";
 
-    private final static String FETCH_CAMPAIGN_DETAILS_URL = "http://localhost:8080/api/v1/9059845250/campaign/details";
+    private final static String CAMPAIGN_METRICS_SAVE_FAILED = "CAMPAIGN_METRICS_SAVE_FAILED";
+
+    private final static String CAMPAIGN_DETAILS_SAVE_FAILED = "CAMPAIGN_DETAILS_SAVE_FAILED";
+    private final static String CAMPAIGN_DETAILS_REMOVED_FAILED = "CAMPAIGN_DETAILS_REMOVED_FAILED";
 
     private final CampaignRepository campaignRepository;
 
     private final CampaignMetricsRepository campaignMetricsRepository;
 
-    public CachingServiceImpl(CampaignRepository campaignRepository, CampaignMetricsRepository campaignMetricsRepository) {
+    private final ApiExceptionResolver resolver;
+
+    public CachingServiceImpl(CampaignRepository campaignRepository,
+                              CampaignMetricsRepository campaignMetricsRepository,
+                              GAMSErrorRepository gamsErrorRepository,
+                              DatabaseErrorRepository databaseErrorRepository) {
         this.campaignRepository = campaignRepository;
         this.campaignMetricsRepository = campaignMetricsRepository;
+        resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
     }
 
     @Override
@@ -51,46 +60,70 @@ public class CachingServiceImpl implements CachingService {
      */
     @Override
     public void cacheCampaignMetrics(String customerId, String campaignId, String startDate, String endDate) {
+        List<CampaignMetricsDocument> campaignMetricsDocuments = new ArrayList<>();
+        ResponseEntity<CampaignMetricsDocument[]> response;
+
         // construct the url given the parameters
         String url = GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX + campaignId +
                 START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
-        // fetch campaign metrics from GAMS for a given customer id and date range
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<CampaignMetricsDocument[]> response =
-                restTemplate.getForEntity(url, CampaignMetricsDocument[].class);
+        try {
+            // fetch campaign metrics from GAMS for a given customer id and date range
+            RestTemplate restTemplate = new RestTemplate();
+            response = restTemplate.getForEntity(url, CampaignMetricsDocument[].class);
 
-        if (response.getStatusCode() != HttpStatus.OK) {
-            throw new GAMSException("GAMS Error: " + response);
+            // extract the response body
+            campaignMetricsDocuments = Arrays.asList(Objects.requireNonNull(response.getBody()));
+
+        } catch (Exception ex) {
+            GamsError gamsError = new GamsError();
+            gamsError.setCustomerId(customerId);
+            gamsError.setFailedUrl(url);
+            gamsError.setCampaignId(campaignId);
+
+            resolver.throwApiException(gamsError, ex.getMessage());
         }
 
-        // extract the response body
-        List<CampaignMetricsDocument> campaignMetricsDocuments =
-                Arrays.asList(Objects.requireNonNull(response.getBody()));
-
-        System.out.println("CODE: " + campaignMetricsDocuments.get(0).getCampaignResourceName());
         try {
             // store the campaign metrics in the collection
             campaignMetricsRepository.saveAll(campaignMetricsDocuments);
         } catch (Exception e) {
-            throw new DatabaseException("Error storing campaign metrics in collection. Message: " + e);
+            // throw a database error
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setStatusCode(500);
+            databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            databaseError.setFailedUrl(url);
+            databaseError.setErrorCode(CAMPAIGN_METRICS_SAVE_FAILED);
+
+            resolver.throwApiException(databaseError, e.getMessage());
         }
     }
 
+    /**
+     * Cache all enabled and/or paused campaigns in client's account
+     *
+     * @param customerId the id of the client's account
+     */
     @Override
     public void cacheAllCampaignDetails(String customerId) {
-        // fetch all campaign details from GAMS for a given customer id
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<CampaignDetails[]> response =
-                restTemplate.getForEntity(FETCH_CAMPAIGN_DETAILS_URL, CampaignDetails[].class);
+        String url = GAMS_BASE_URL + customerId + CAMPAIGN_DETAILS_POST_FIX;
+        List<CampaignDetails> campaignDetailsList = new ArrayList<>();
+        ResponseEntity<CampaignDetails[]> response;
 
-        if (response.getStatusCode() != HttpStatus.OK) {
-            throw new GAMSException("GAMS Error: " + response);
+        try {
+            // fetch all campaign details from GAMS for a given customer id
+            RestTemplate restTemplate = new RestTemplate();
+            response = restTemplate.getForEntity(url, CampaignDetails[].class);
+            // extract the campaign details from the response body
+            campaignDetailsList = Arrays.asList(Objects.requireNonNull(response.getBody()));
+        } catch (Exception ex) {
+            GamsError gamsError = new GamsError();
+            gamsError.setCustomerId(customerId);
+            gamsError.setFailedUrl(url);
+
+            resolver.throwApiException(gamsError, ex.getMessage());
         }
-
-        // extract the campaign details from the response body
-        List<CampaignDetails> campaignDetailsList
-                = Arrays.asList(Objects.requireNonNull(response.getBody()));
 
         // extract the campaign documents into a list
         List<CampaignDocument> campaignDocumentList = new ArrayList<>();
@@ -103,14 +136,21 @@ public class CachingServiceImpl implements CachingService {
             campaignDocumentList.add(campaignDocument);
         }));
 
-        try {
-            // remove older versions of campaign documents from the DB
-            removeExistingCampaignDocuments(customerId, campaignDetailsList);
+        // remove older versions of campaign documents from the DB
+        removeExistingCampaignDocuments(customerId, campaignDetailsList);
 
+        try {
             // save campaign documents into Mongo database
             campaignRepository.saveAll(campaignDocumentList);
         } catch (Exception e) {
-            throw new DatabaseException("Error storing campaign details in collection. Message: " + e);
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setErrorCode(CAMPAIGN_DETAILS_SAVE_FAILED);
+            databaseError.setFailedUrl(url);
+            databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setStatusCode(500);
+
+            resolver.throwApiException(databaseError, e.getMessage());
         }
     }
 
@@ -122,29 +162,35 @@ public class CachingServiceImpl implements CachingService {
      */
     private void removeExistingCampaignDocuments(String customerId,
                                                  List<CampaignDetails> campaignDetailsList) {
-        // fetch all CampaignDocuments by the given customerId
-        List<CampaignDocument> campaignDocuments
-                = campaignRepository.findAllCampaignDocumentsByCustomerId(customerId);
-
-        // if there is exists a campaignDocument containing a campaignDetails object with the same
-        // campaign resource name as in our given campaignDetailsList, add to a list to be removed
-        List<CampaignDocument> documentsToBeRemoved = new ArrayList<>();
-        campaignDetailsList.forEach(campaignDetails -> {
-            campaignDocuments.forEach(campaignDocument -> {
-                if (campaignDetails.getCampaignResourceName()
-                        .equals(campaignDocument.getCampaignDetails().getCampaignResourceName())) {
-                    documentsToBeRemoved.add(campaignDocument);
-                }
-            });
-        });
-
         try {
+            // fetch all CampaignDocuments by the given customerId
+            List<CampaignDocument> campaignDocuments
+                    = campaignRepository.findAllCampaignDocumentsByCustomerId(customerId);
+
+            // if there is exists a campaignDocument containing a campaignDetails object with the same
+            // campaign resource name as in our given campaignDetailsList, add to a list to be removed
+            List<CampaignDocument> documentsToBeRemoved = new ArrayList<>();
+            campaignDetailsList.forEach(campaignDetails -> {
+                campaignDocuments.forEach(campaignDocument -> {
+                    if (campaignDetails.getCampaignResourceName()
+                            .equals(campaignDocument.getCampaignDetails().getCampaignResourceName())) {
+                        documentsToBeRemoved.add(campaignDocument);
+                    }
+                });
+            });
+
             // remove any matching documents from the database
             if (!documentsToBeRemoved.isEmpty()) {
                 campaignRepository.deleteAll(documentsToBeRemoved);
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error deleting campaign details. Message: " + e);
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setStatusCode(500);
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setFailedUrl("");
+            databaseError.setErrorCode(CAMPAIGN_DETAILS_REMOVED_FAILED);
+
+            resolver.throwApiException(databaseError, e.getMessage());
         }
     }
 }

@@ -1,7 +1,15 @@
 package com.addyai.addyaiservice.exception;
 
+import com.addyai.addyaiservice.models.error.InternalError;
+
 public class GAMSException extends RuntimeException {
+    public InternalError internalError = new InternalError();
+
     public GAMSException() {
+    }
+
+    public GAMSException(InternalError internalError) {
+        this.internalError = internalError;
     }
 
     public GAMSException(String message) {

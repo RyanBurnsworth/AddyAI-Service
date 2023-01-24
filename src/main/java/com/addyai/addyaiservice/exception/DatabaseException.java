@@ -1,7 +1,16 @@
 package com.addyai.addyaiservice.exception;
 
+import com.addyai.addyaiservice.models.error.InternalError;
+
 public class DatabaseException extends RuntimeException {
+
+    public InternalError internalError;
+
     public DatabaseException() {
+    }
+
+    public DatabaseException(InternalError internalError) {
+        this.internalError = internalError;
     }
 
     public DatabaseException(String message) {
