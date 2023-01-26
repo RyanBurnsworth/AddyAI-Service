@@ -1,6 +1,6 @@
 package com.addyai.addyaiservice.repos;
 
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 

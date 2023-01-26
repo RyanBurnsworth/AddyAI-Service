@@ -1,7 +1,7 @@
 package com.addyai.addyaiservice.services.campaign;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 
 import java.text.ParseException;
 import java.util.List;

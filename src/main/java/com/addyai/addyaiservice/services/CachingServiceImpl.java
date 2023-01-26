@@ -3,7 +3,7 @@ package com.addyai.addyaiservice.services;
 import com.addyai.addyaiservice.exception.ApiExceptionResolver;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 import com.addyai.addyaiservice.models.error.DatabaseError;
 import com.addyai.addyaiservice.models.error.GamsError;
 import com.addyai.addyaiservice.repos.CampaignMetricsRepository;
@@ -20,7 +20,7 @@ import java.util.*;
 @Service
 public class CachingServiceImpl implements CachingService {
     private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
-    private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy?campaignId=";
+    private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy";
     private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
     private final static String START_DATE_POST_FIX = "&startDate=";
     private final static String END_DATE_POST_FIX = "&endDate=";
@@ -70,7 +70,7 @@ public class CachingServiceImpl implements CachingService {
         try {
             // fetch campaign metrics from GAMS for a given customer id and date range
             RestTemplate restTemplate = new RestTemplate();
-            response = restTemplate.getForEntity(url, CampaignMetricsDocument[].class);
+            response = restTemplate.getForEntity(GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX, CampaignMetricsDocument[].class);
 
             // extract the response body
             campaignMetricsDocuments = Arrays.asList(Objects.requireNonNull(response.getBody()));

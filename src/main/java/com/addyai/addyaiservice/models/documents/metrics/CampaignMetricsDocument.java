@@ -1,4 +1,4 @@
-package com.addyai.addyaiservice.models.documents;
+package com.addyai.addyaiservice.models.documents.metrics;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +22,8 @@ public class CampaignMetricsDocument {
     private double ctr;
 
     private double averageCpc;
+
+    private double cost;
 
     private double conversions;
 

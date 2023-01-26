@@ -2,7 +2,7 @@ package com.addyai.addyaiservice.services.campaign;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 import com.addyai.addyaiservice.repos.CampaignMetricsRepository;
 import com.addyai.addyaiservice.repos.CampaignRepository;
 import org.springframework.stereotype.Service;

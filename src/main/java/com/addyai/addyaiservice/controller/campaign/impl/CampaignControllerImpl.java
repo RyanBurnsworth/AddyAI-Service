@@ -2,7 +2,7 @@ package com.addyai.addyaiservice.controller.campaign.impl;
 
 import com.addyai.addyaiservice.controller.campaign.CampaignController;
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 import com.addyai.addyaiservice.services.campaign.CampaignService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,8 +38,11 @@ public class CampaignControllerImpl implements CampaignController {
     }
 
     @Override
-    @GetMapping("campaign-metrics-range")
-    public ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignResourceName, String startDate, String endDate) throws ParseException {
+    @GetMapping("metrics")
+    public ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(@PathVariable String customerId,
+                                                                                         @RequestParam String campaignResourceName,
+                                                                                         @RequestParam String startDate,
+                                                                                         @RequestParam String endDate) throws ParseException {
         return new ResponseEntity<>(campaignService.fetchMetricsByDateRange(customerId, campaignResourceName, startDate, endDate), HttpStatus.OK);
     }
 }

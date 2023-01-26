@@ -1,7 +1,7 @@
 package com.addyai.addyaiservice.controller.campaign;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.models.documents.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
 import org.springframework.http.ResponseEntity;
 
 import java.text.ParseException;
