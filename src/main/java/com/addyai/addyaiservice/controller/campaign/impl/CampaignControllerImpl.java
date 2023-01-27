@@ -2,8 +2,9 @@ package com.addyai.addyaiservice.controller.campaign.impl;
 
 import com.addyai.addyaiservice.controller.campaign.CampaignController;
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import com.addyai.addyaiservice.services.campaign.CampaignService;
+import com.addyai.addyaiservice.services.metric.MetricService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,11 @@ import java.util.List;
 public class CampaignControllerImpl implements CampaignController {
 
     private final CampaignService campaignService;
-
-    public CampaignControllerImpl(CampaignService campaignService) {
+    private final MetricService metricService;
+    
+    public CampaignControllerImpl(CampaignService campaignService, MetricService metricService) {
         this.campaignService = campaignService;
+        this.metricService = metricService;
     }
 
     @Override
@@ -39,10 +42,10 @@ public class CampaignControllerImpl implements CampaignController {
 
     @Override
     @GetMapping("metrics")
-    public ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(@PathVariable String customerId,
-                                                                                         @RequestParam String campaignId,
-                                                                                         @RequestParam String startDate,
-                                                                                         @RequestParam String endDate) throws ParseException {
-        return new ResponseEntity<>(campaignService.fetchMetricsByDateRange(campaignId, startDate, endDate), HttpStatus.OK);
+    public ResponseEntity<List<MetricsDocument>> fetchCampaignMetricsByDateRange(@PathVariable String customerId,
+                                                                                 @RequestParam String campaignId,
+                                                                                 @RequestParam String startDate,
+                                                                                 @RequestParam String endDate) throws ParseException {
+        return new ResponseEntity<>(metricService.fetchMetricsByDateRange(campaignId, startDate, endDate), HttpStatus.OK);
     }
 }

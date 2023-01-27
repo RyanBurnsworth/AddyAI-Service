@@ -1,7 +1,7 @@
 package com.addyai.addyaiservice.controller.campaign;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
-import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import org.springframework.http.ResponseEntity;
 
 import java.text.ParseException;
@@ -12,5 +12,5 @@ public interface CampaignController {
 
     ResponseEntity<CampaignDetails> fetchCampaignByName(String customerId, String campaignName);
 
-    ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignId, String startDate, String endDate) throws ParseException;
+    ResponseEntity<List<MetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignId, String startDate, String endDate) throws ParseException;
 }

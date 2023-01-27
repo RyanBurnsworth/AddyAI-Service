@@ -1,10 +1,11 @@
-package com.addyai.addyaiservice.services.campaign;
+package com.addyai.addyaiservice.services.campaign.impl;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
-import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
-import com.addyai.addyaiservice.repos.CampaignMetricsRepository;
+import com.addyai.addyaiservice.models.documents.MetricsDocument;
+import com.addyai.addyaiservice.repos.MetricsRepository;
 import com.addyai.addyaiservice.repos.CampaignRepository;
+import com.addyai.addyaiservice.services.campaign.CampaignService;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -17,11 +18,11 @@ import java.util.List;
 public class CampaignServiceImpl implements CampaignService {
     private final CampaignRepository campaignRepository;
 
-    private final CampaignMetricsRepository campaignMetricsRepository;
+    private final MetricsRepository metricsRepository;
 
-    public CampaignServiceImpl(CampaignRepository campaignRepository, CampaignMetricsRepository campaignMetricsRepository) {
+    public CampaignServiceImpl(CampaignRepository campaignRepository, MetricsRepository metricsRepository) {
         this.campaignRepository = campaignRepository;
-        this.campaignMetricsRepository = campaignMetricsRepository;
+        this.metricsRepository = metricsRepository;
     }
 
     @Override
@@ -43,13 +44,5 @@ public class CampaignServiceImpl implements CampaignService {
                 = campaignRepository.findCampaignDocumentByName(customerId, campaignName);
 
         return campaignDocument.getCampaignDetails();
-    }
-
-    @Override
-    public List<CampaignMetricsDocument> fetchMetricsByDateRange(String campaignId, String startDate, String endDate) throws ParseException {
-        Date sDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-        Date eDate = new SimpleDateFormat("yyyy-MM-dd").parse(endDate);
-
-        return campaignMetricsRepository.findAllMetricsInDateRange(campaignId, sDate, eDate);
     }
 }

@@ -1,15 +1,17 @@
-package com.addyai.addyaiservice.services;
+package com.addyai.addyaiservice.services.cache.impl;
 
 import com.addyai.addyaiservice.exception.ApiExceptionResolver;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
-import com.addyai.addyaiservice.models.documents.metrics.CampaignMetricsDocument;
+import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import com.addyai.addyaiservice.models.error.DatabaseError;
 import com.addyai.addyaiservice.models.error.GamsError;
-import com.addyai.addyaiservice.repos.CampaignMetricsRepository;
 import com.addyai.addyaiservice.repos.CampaignRepository;
 import com.addyai.addyaiservice.repos.DatabaseErrorRepository;
 import com.addyai.addyaiservice.repos.GAMSErrorRepository;
+import com.addyai.addyaiservice.repos.MetricsRepository;
+import com.addyai.addyaiservice.services.cache.CachingService;
+import com.addyai.addyaiservice.utils.Constants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -21,6 +23,10 @@ import java.util.*;
 public class CachingServiceImpl implements CachingService {
     private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
     private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy";
+    private final static String ADGROUP_METRICS_POST_FIX = "/adgroup/metrics/dummy";
+    private final static String AD_METRICS_POST_FIX = "/ad/metrics/dummy";
+    private final static String KEYWORD_METRICS_POST_FIX = "/keyword/metrics/dummy";
+
     private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
     private final static String START_DATE_POST_FIX = "&startDate=";
     private final static String END_DATE_POST_FIX = "&endDate=";
@@ -32,16 +38,16 @@ public class CachingServiceImpl implements CachingService {
 
     private final CampaignRepository campaignRepository;
 
-    private final CampaignMetricsRepository campaignMetricsRepository;
+    private final MetricsRepository metricsRepository;
 
     private final ApiExceptionResolver resolver;
 
     public CachingServiceImpl(CampaignRepository campaignRepository,
-                              CampaignMetricsRepository campaignMetricsRepository,
+                              MetricsRepository metricsRepository,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
         this.campaignRepository = campaignRepository;
-        this.campaignMetricsRepository = campaignMetricsRepository;
+        this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
     }
 
@@ -54,41 +60,56 @@ public class CachingServiceImpl implements CachingService {
      * Fetch and store the campaign metrics in the Campaign_Metrics collection
      *
      * @param customerId the customer id of the Google Ads account
-     * @param campaignId the id of the campaign to fetch metrics from
+     * @param resourceId the id of the campaign to fetch metrics from
      * @param startDate  the start of the date range
      * @param endDate    the end of the date range
+     * @param type       the type of resource (0 - Account, 1 - Campaign, etc.)
      */
     @Override
-    public void cacheCampaignMetrics(String customerId, String campaignId, String startDate, String endDate) {
-        List<CampaignMetricsDocument> campaignMetricsDocuments = new ArrayList<>();
-        ResponseEntity<CampaignMetricsDocument[]> response;
+    public void cacheMetrics(String customerId, String resourceId, String startDate, String endDate, int type) {
+        List<MetricsDocument> metricsDocuments = new ArrayList<>();
+        ResponseEntity<MetricsDocument[]> response;
+        String url = GAMS_BASE_URL + customerId;
+        String datePostFix = START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
-        // construct the url given the parameters
-        String url = GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX + "?campaignResourceName=" + campaignId +
-                START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
+        if (type == Constants.TYPE_CAMPAIGN) {
+            url = url + CAMPAIGN_METRICS_POST_FIX + "?campaignResourceName=" + resourceId + datePostFix;
+        } else if (type == Constants.TYPE_ADGROUP) {
+            url = url + ADGROUP_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&campaignId=" + resourceId + datePostFix;
+        } else if (type == Constants.TYPE_AD) {
+            url = url + AD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&adId=" + resourceId + datePostFix;
+        } else if (type == Constants.TYPE_KEYWORD) {
+            url = url + KEYWORD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&keywordId=" + resourceId + datePostFix;
+        } else {
+            System.out.println("Error");
+            // TODO: Throw an exception
+        }
 
         try {
             // fetch campaign metrics from GAMS for a given customer id and date range
             RestTemplate restTemplate = new RestTemplate();
-            response = restTemplate.getForEntity(url, CampaignMetricsDocument[].class);
+            response = restTemplate.getForEntity(url, MetricsDocument[].class);
 
             // extract the response body
-            campaignMetricsDocuments = Arrays.asList(Objects.requireNonNull(response.getBody()));
+            metricsDocuments = Arrays.asList(Objects.requireNonNull(response.getBody()));
 
             // add customerId to the records
-            campaignMetricsDocuments.forEach(document -> document.setCustomerId(customerId));
+            metricsDocuments.forEach(document -> document.setCustomerId(customerId));
         } catch (Exception ex) {
             GamsError gamsError = new GamsError();
             gamsError.setCustomerId(customerId);
             gamsError.setFailedUrl(url);
-            gamsError.setCampaignId(campaignId);
+            gamsError.setCampaignId(resourceId);
 
             resolver.throwApiException(gamsError, ex.getMessage());
         }
 
+        // remove existing documents to avoid duplication
+        removeExistingMetricsDocuments(metricsDocuments, customerId, type, startDate, endDate);
+
         try {
             // store the campaign metrics in the collection
-            campaignMetricsRepository.saveAll(campaignMetricsDocuments);
+            metricsRepository.saveAll(metricsDocuments);
         } catch (Exception e) {
             // throw a database error
             DatabaseError databaseError = new DatabaseError();
@@ -194,5 +215,36 @@ public class CachingServiceImpl implements CachingService {
 
             resolver.throwApiException(databaseError, e.getMessage());
         }
+    }
+
+    /**
+     * Remove documents that exist in both the database and the incoming metrics documents to avoid duplication.
+     *
+     * @param incomingMetricDocuments the incoming metrics documents to be added to the database collection
+     * @param customerId              the id of the customer account
+     * @param type                    the type of resource
+     * @param startDate               the date at the beginning of the date range
+     * @param endDate                 the date at the end of the date range
+     */
+    private void removeExistingMetricsDocuments(List<MetricsDocument> incomingMetricDocuments,
+                                                String customerId, int type, String startDate, String endDate) {
+        // fetch all the existing documents by customerId, type and date range
+        List<MetricsDocument> metricsDocumentsList = metricsRepository
+                .findAllMetricsByCustomerIdAndType(customerId, type);
+
+        List<MetricsDocument> metricsDocumentsToBeRemoved = new ArrayList<>();
+
+        metricsDocumentsList.forEach(metricsDocument -> {
+            incomingMetricDocuments.forEach(incomingMetricDocument -> {
+                // metrics documents are distinct by date
+                if (metricsDocument.getDate().equals(incomingMetricDocument.getDate())) {
+                    metricsDocumentsToBeRemoved.add(metricsDocument);
+                }
+            });
+        });
+
+        // TODO throw an exception if a database failure occurs
+        if (!metricsDocumentsToBeRemoved.isEmpty())
+            metricsRepository.deleteAll(metricsDocumentsToBeRemoved);
     }
 }

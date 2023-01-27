@@ -1,4 +1,4 @@
-package com.addyai.addyaiservice.services;
+package com.addyai.addyaiservice.services.adgroup;
 
 import com.addyai.addyaiservice.models.AdGroupDetails;
 

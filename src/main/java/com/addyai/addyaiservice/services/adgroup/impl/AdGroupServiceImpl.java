@@ -1,6 +1,7 @@
-package com.addyai.addyaiservice.services;
+package com.addyai.addyaiservice.services.adgroup.impl;
 
 import com.addyai.addyaiservice.models.AdGroupDetails;
+import com.addyai.addyaiservice.services.adgroup.AdGroupService;
 
 import java.util.List;
 

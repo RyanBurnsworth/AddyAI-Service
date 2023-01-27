@@ -1,8 +1,9 @@
-package com.addyai.addyaiservice.models.documents.metrics;
+package com.addyai.addyaiservice.models.documents;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
@@ -10,8 +11,10 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @Setter
-@Document("Campaign_Metrics")
-public class CampaignMetricsDocument {
+@Document("Metrics")
+public class MetricsDocument {
+    @Id
+    private String mongoId;
     private int type;
     private Date date;
     private String customerId;
