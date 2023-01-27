@@ -46,10 +46,10 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    public List<CampaignMetricsDocument> fetchMetricsByDateRange(String customerId, String campaignResourceName, String startDate, String endDate) throws ParseException {
+    public List<CampaignMetricsDocument> fetchMetricsByDateRange(String campaignId, String startDate, String endDate) throws ParseException {
         Date sDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
         Date eDate = new SimpleDateFormat("yyyy-MM-dd").parse(endDate);
 
-        return campaignMetricsRepository.findAllMetricsInDateRange(campaignResourceName, sDate, eDate);
+        return campaignMetricsRepository.findAllMetricsInDateRange(campaignId, sDate, eDate);
     }
 }

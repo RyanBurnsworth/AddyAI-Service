@@ -15,6 +15,11 @@
 
 package com.addyai.addyaiservice.models;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class KeywordDetails {
     private long keywordId;
 
@@ -29,60 +34,4 @@ public class KeywordDetails {
     private int status;
 
     private double cpcBid;
-
-    public long getKeywordId() {
-        return keywordId;
-    }
-
-    public void setKeywordId(long keywordId) {
-        this.keywordId = keywordId;
-    }
-
-    public String getKeywordResourceName() {
-        return keywordResourceName;
-    }
-
-    public void setKeywordResourceName(String keywordResourceName) {
-        this.keywordResourceName = keywordResourceName;
-    }
-
-    public String getAdGroupResourceName() {
-        return adGroupResourceName;
-    }
-
-    public void setAdGroupResourceName(String adGroupResourceName) {
-        this.adGroupResourceName = adGroupResourceName;
-    }
-
-    public String getKeywordText() {
-        return keywordText;
-    }
-
-    public void setKeywordText(String keywordText) {
-        this.keywordText = keywordText;
-    }
-
-    public int getKeywordMatchType() {
-        return keywordMatchType;
-    }
-
-    public void setKeywordMatchType(int keywordMatchType) {
-        this.keywordMatchType = keywordMatchType;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public double getCpcBid() {
-        return cpcBid;
-    }
-
-    public void setCpcBid(double cpcBid) {
-        this.cpcBid = cpcBid;
-    }
 }

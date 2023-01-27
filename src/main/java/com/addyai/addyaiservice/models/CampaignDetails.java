@@ -16,10 +16,14 @@
 package com.addyai.addyaiservice.models;
 
 import com.addyai.addyaiservice.models.campaign_criterion.CriterionDetails;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 public class CampaignDetails {
 
     /**
@@ -121,133 +125,5 @@ public class CampaignDetails {
      *
      * @see CriterionDetails
      */
-    private List<CriterionDetails> criterionDetailsList = new ArrayList<>();
-
-    public long getCampaignId() {
-        return campaignId;
-    }
-
-    public void setCampaignId(long campaignId) {
-        this.campaignId = campaignId;
-    }
-
-    public String getCampaignName() {
-        return campaignName;
-    }
-
-    public void setCampaignName(String campaignName) {
-        this.campaignName = campaignName;
-    }
-
-    public String getCampaignResourceName() {
-        return campaignResourceName;
-    }
-
-    public void setCampaignResourceName(String campaignResourceName) {
-        this.campaignResourceName = campaignResourceName;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public int getAdvertisingChannelType() {
-        return advertisingChannelType;
-    }
-
-    public void setAdvertisingChannelType(int advertisingChannelType) {
-        this.advertisingChannelType = advertisingChannelType;
-    }
-
-    public int getPositiveGeoTargetType() {
-        return positiveGeoTargetType;
-    }
-
-    public void setPositiveGeoTargetType(int positiveGeoTargetType) {
-        this.positiveGeoTargetType = positiveGeoTargetType;
-    }
-
-    public int getNegativeGeoTargetType() {
-        return negativeGeoTargetType;
-    }
-
-    public void setNegativeGeoTargetType(int negativeGeoTargetType) {
-        this.negativeGeoTargetType = negativeGeoTargetType;
-    }
-
-    public boolean isEnhancedCpcEnabled() {
-        return isEnhancedCpcEnabled;
-    }
-
-    public void setEnhancedCpcEnabled(boolean enhancedCpcEnabled) {
-        isEnhancedCpcEnabled = enhancedCpcEnabled;
-    }
-
-    public String getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(String startDate) {
-        this.startDate = startDate;
-    }
-
-    public String getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(String endDate) {
-        this.endDate = endDate;
-    }
-
-    public boolean isTargetingSearchNetwork() {
-        return isTargetingSearchNetwork;
-    }
-
-    public void setTargetingSearchNetwork(boolean targetingSearchNetwork) {
-        isTargetingSearchNetwork = targetingSearchNetwork;
-    }
-
-    public boolean isTargetingContentNetwork() {
-        return isTargetingContentNetwork;
-    }
-
-    public void setTargetingContentNetwork(boolean targetingContentNetwork) {
-        isTargetingContentNetwork = targetingContentNetwork;
-    }
-
-    public boolean isTargetingGoogleSearchNetwork() {
-        return isTargetingGoogleSearchNetwork;
-    }
-
-    public void setTargetingGoogleSearchNetwork(boolean targetingGoogleSearchNetwork) {
-        isTargetingGoogleSearchNetwork = targetingGoogleSearchNetwork;
-    }
-
-    public String getBudgetResourceName() {
-        return budgetResourceName;
-    }
-
-    public void setBudgetResourceName(String budgetResourceName) {
-        this.budgetResourceName = budgetResourceName;
-    }
-
-    public BudgetDetails getBudgetDetails() {
-        return budgetDetails;
-    }
-
-    public void setBudgetDetails(BudgetDetails budgetDetails) {
-        this.budgetDetails = budgetDetails;
-    }
-
-    public List<CriterionDetails> getCampaignCriteriaList() {
-        return criterionDetailsList;
-    }
-
-    public void setCampaignCriteriaList(List<CriterionDetails> criterionDetailsList) {
-        this.criterionDetailsList = criterionDetailsList;
-    }
+    private List<CriterionDetails> campaignCriteriaList = new ArrayList<>();
 }

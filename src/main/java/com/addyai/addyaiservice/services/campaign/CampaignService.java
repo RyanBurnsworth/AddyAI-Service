@@ -11,5 +11,5 @@ public interface CampaignService {
 
     CampaignDetails fetchCampaignDetailsByName(String customerId, String campaignName);
 
-    List<CampaignMetricsDocument> fetchMetricsByDateRange(String customerId, String campaignResourceName, String startDate, String endDate) throws ParseException;
+    List<CampaignMetricsDocument> fetchMetricsByDateRange(String campaignResourceName, String startDate, String endDate) throws ParseException;
 }

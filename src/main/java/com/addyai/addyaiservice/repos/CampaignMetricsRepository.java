@@ -8,6 +8,6 @@ import java.util.Date;
 import java.util.List;
 
 public interface CampaignMetricsRepository extends MongoRepository<CampaignMetricsDocument, String> {
-    @Query("{'campaignResourceName': ?0, 'date' : { $gte: ?1, $lte: ?2 } }")
-    List<CampaignMetricsDocument> findAllMetricsInDateRange(String campaignResourceName, Date startDate, Date endDate);
+    @Query("{'resourceId': ?0, 'date' : { $gte: ?1, $lte: ?2 } }")
+    List<CampaignMetricsDocument> findAllMetricsInDateRange(String campaignId, Date startDate, Date endDate);
 }

@@ -1,7 +1,12 @@
 package com.addyai.addyaiservice.models.ads;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class ResponsiveSearchAdDetails extends AdDetails {
     private List<String> headlines;
     private List<String> descriptions;
@@ -47,37 +52,4 @@ public class ResponsiveSearchAdDetails extends AdDetails {
     public void setAdStatus(int adStatus) {
         super.setAdStatus(adStatus);
     }
-
-    public List<String> getHeadlines() {
-        return headlines;
-    }
-
-    public void setHeadlines(List<String> headlines) {
-        this.headlines = headlines;
-    }
-
-    public List<String> getDescriptions() {
-        return descriptions;
-    }
-
-    public void setDescriptions(List<String> descriptions) {
-        this.descriptions = descriptions;
-    }
-
-    public List<String> getPaths() {
-        return paths;
-    }
-
-    public void setPaths(List<String> paths) {
-        this.paths = paths;
-    }
-
-    public String getFinalUrl() {
-        return finalUrl;
-    }
-
-    public void setFinalUrl(String finalUrl) {
-        this.finalUrl = finalUrl;
-    }
-
 }

@@ -40,9 +40,9 @@ public class CampaignControllerImpl implements CampaignController {
     @Override
     @GetMapping("metrics")
     public ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(@PathVariable String customerId,
-                                                                                         @RequestParam String campaignResourceName,
+                                                                                         @RequestParam String campaignId,
                                                                                          @RequestParam String startDate,
                                                                                          @RequestParam String endDate) throws ParseException {
-        return new ResponseEntity<>(campaignService.fetchMetricsByDateRange(customerId, campaignResourceName, startDate, endDate), HttpStatus.OK);
+        return new ResponseEntity<>(campaignService.fetchMetricsByDateRange(campaignId, startDate, endDate), HttpStatus.OK);
     }
 }

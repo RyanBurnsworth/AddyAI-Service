@@ -15,6 +15,11 @@
 
 package com.addyai.addyaiservice.models;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class BudgetDetails {
     /**
      * The identifier for the budget. Auto-generates when the budget is created.
@@ -55,60 +60,4 @@ public class BudgetDetails {
      * The status of the budget
      */
     private int status;
-
-    public long getBudgetId() {
-        return budgetId;
-    }
-
-    public void setBudgetId(long budgetId) {
-        this.budgetId = budgetId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getResourceName() {
-        return resourceName;
-    }
-
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
-    }
-
-    public int getDeliveryMethod() {
-        return deliveryMethod;
-    }
-
-    public void setDeliveryMethod(int deliveryMethod) {
-        this.deliveryMethod = deliveryMethod;
-    }
-
-    public boolean isShared() {
-        return isShared;
-    }
-
-    public void setShared(boolean shared) {
-        isShared = shared;
-    }
-
-    public int getDailyBudgetAmount() {
-        return dailyBudgetAmount;
-    }
-
-    public void setDailyBudgetAmount(int dailyBudgetAmount) {
-        this.dailyBudgetAmount = dailyBudgetAmount;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
 }

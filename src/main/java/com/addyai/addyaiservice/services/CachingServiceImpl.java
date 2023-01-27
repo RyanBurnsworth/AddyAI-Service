@@ -64,17 +64,19 @@ public class CachingServiceImpl implements CachingService {
         ResponseEntity<CampaignMetricsDocument[]> response;
 
         // construct the url given the parameters
-        String url = GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX + campaignId +
+        String url = GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX + "?campaignResourceName=" + campaignId +
                 START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
         try {
             // fetch campaign metrics from GAMS for a given customer id and date range
             RestTemplate restTemplate = new RestTemplate();
-            response = restTemplate.getForEntity(GAMS_BASE_URL + customerId + CAMPAIGN_METRICS_POST_FIX, CampaignMetricsDocument[].class);
+            response = restTemplate.getForEntity(url, CampaignMetricsDocument[].class);
 
             // extract the response body
             campaignMetricsDocuments = Arrays.asList(Objects.requireNonNull(response.getBody()));
 
+            // add customerId to the records
+            campaignMetricsDocuments.forEach(document -> document.setCustomerId(customerId));
         } catch (Exception ex) {
             GamsError gamsError = new GamsError();
             gamsError.setCustomerId(customerId);

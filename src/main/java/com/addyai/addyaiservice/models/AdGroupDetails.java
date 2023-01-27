@@ -15,6 +15,11 @@
 
 package com.addyai.addyaiservice.models;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class AdGroupDetails {
     /**
      * The identifier value for the AdGroup
@@ -52,60 +57,4 @@ public class AdGroupDetails {
      * The maximum bid for each cost-per-click
      */
     private double cpcBid;
-
-    public long getAdGroupId() {
-        return adGroupId;
-    }
-
-    public void setAdGroupId(long adGroupId) {
-        this.adGroupId = adGroupId;
-    }
-
-    public String getAdGroupName() {
-        return adGroupName;
-    }
-
-    public void setAdGroupName(String adGroupName) {
-        this.adGroupName = adGroupName;
-    }
-
-    public String getAdGroupResourceName() {
-        return adGroupResourceName;
-    }
-
-    public void setAdGroupResourceName(String adGroupResourceName) {
-        this.adGroupResourceName = adGroupResourceName;
-    }
-
-    public String getCampaignResourceName() {
-        return campaignResourceName;
-    }
-
-    public void setCampaignResourceName(String campaignResourceName) {
-        this.campaignResourceName = campaignResourceName;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public double getCpcBid() {
-        return cpcBid;
-    }
-
-    public void setCpcBid(double cpcBid) {
-        this.cpcBid = cpcBid;
-    }
 }

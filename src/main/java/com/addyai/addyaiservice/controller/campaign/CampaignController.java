@@ -12,5 +12,5 @@ public interface CampaignController {
 
     ResponseEntity<CampaignDetails> fetchCampaignByName(String customerId, String campaignName);
 
-    ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignResourceName, String startDate, String endDate) throws ParseException;
+    ResponseEntity<List<CampaignMetricsDocument>> fetchCampaignMetricsByDateRange(String customerId, String campaignId, String startDate, String endDate) throws ParseException;
 }
