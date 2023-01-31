@@ -2,27 +2,19 @@ package com.addyai.addyaiservice.services.campaign.impl;
 
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
-import com.addyai.addyaiservice.models.documents.MetricsDocument;
-import com.addyai.addyaiservice.repos.MetricsRepository;
 import com.addyai.addyaiservice.repos.CampaignRepository;
 import com.addyai.addyaiservice.services.campaign.CampaignService;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
 public class CampaignServiceImpl implements CampaignService {
     private final CampaignRepository campaignRepository;
 
-    private final MetricsRepository metricsRepository;
-
-    public CampaignServiceImpl(CampaignRepository campaignRepository, MetricsRepository metricsRepository) {
+    public CampaignServiceImpl(CampaignRepository campaignRepository) {
         this.campaignRepository = campaignRepository;
-        this.metricsRepository = metricsRepository;
     }
 
     @Override

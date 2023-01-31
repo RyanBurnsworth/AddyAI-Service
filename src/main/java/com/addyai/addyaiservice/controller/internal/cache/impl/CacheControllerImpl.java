@@ -32,4 +32,11 @@ public class CacheControllerImpl implements CacheController {
         cachingService.cacheAllCampaignDetails(customerId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @Override
+    @PostMapping("/account/details")
+    public ResponseEntity<Void> cacheAccountDetails(String customerId) {
+        cachingService.cacheAccountDetails(customerId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

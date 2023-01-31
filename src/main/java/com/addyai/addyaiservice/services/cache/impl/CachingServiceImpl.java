@@ -1,15 +1,14 @@
 package com.addyai.addyaiservice.services.cache.impl;
 
 import com.addyai.addyaiservice.exception.ApiExceptionResolver;
+import com.addyai.addyaiservice.models.AccountDetails;
 import com.addyai.addyaiservice.models.CampaignDetails;
+import com.addyai.addyaiservice.models.documents.AccountDocument;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
 import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import com.addyai.addyaiservice.models.error.DatabaseError;
 import com.addyai.addyaiservice.models.error.GamsError;
-import com.addyai.addyaiservice.repos.CampaignRepository;
-import com.addyai.addyaiservice.repos.DatabaseErrorRepository;
-import com.addyai.addyaiservice.repos.GAMSErrorRepository;
-import com.addyai.addyaiservice.repos.MetricsRepository;
+import com.addyai.addyaiservice.repos.*;
 import com.addyai.addyaiservice.services.cache.CachingService;
 import com.addyai.addyaiservice.utils.Constants;
 import org.springframework.http.ResponseEntity;
@@ -33,19 +32,23 @@ public class CachingServiceImpl implements CachingService {
 
     private final static String CAMPAIGN_METRICS_SAVE_FAILED = "CAMPAIGN_METRICS_SAVE_FAILED";
 
+    private final static String ACCOUNT_DETAILS_SAVE_FAILED = "ACCOUNT_DETAILS_SAVE_FAILED";
     private final static String CAMPAIGN_DETAILS_SAVE_FAILED = "CAMPAIGN_DETAILS_SAVE_FAILED";
     private final static String CAMPAIGN_DETAILS_REMOVED_FAILED = "CAMPAIGN_DETAILS_REMOVED_FAILED";
 
+    private final AccountRepository accountRepository;
     private final CampaignRepository campaignRepository;
 
     private final MetricsRepository metricsRepository;
 
     private final ApiExceptionResolver resolver;
 
-    public CachingServiceImpl(CampaignRepository campaignRepository,
+    public CachingServiceImpl(AccountRepository accountRepository,
+                              CampaignRepository campaignRepository,
                               MetricsRepository metricsRepository,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
+        this.accountRepository = accountRepository;
         this.campaignRepository = campaignRepository;
         this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
@@ -118,6 +121,49 @@ public class CachingServiceImpl implements CachingService {
             databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
             databaseError.setFailedUrl(url);
             databaseError.setErrorCode(CAMPAIGN_METRICS_SAVE_FAILED);
+
+            resolver.throwApiException(databaseError, e.getMessage());
+        }
+    }
+
+    /**
+     * Cache account data from a client account
+     *
+     * @param customerId the id of the client account
+     */
+    @Override
+    public void cacheAccountDetails(String customerId) {
+        String url = GAMS_BASE_URL + "9059845250/account/details";
+        ResponseEntity<AccountDetails> response = null;
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            response = restTemplate.getForEntity(url, AccountDetails.class);
+        } catch (Exception ex) {
+            GamsError gamsError = new GamsError();
+            gamsError.setCustomerId(customerId);
+            gamsError.setFailedUrl(url);
+
+            resolver.throwApiException(gamsError, ex.getMessage());
+        }
+
+        if (response == null || response.getBody() == null)
+            return;
+
+        AccountDocument accountDocument = new AccountDocument();
+        accountDocument.setAccountDetails(response.getBody());
+        accountDocument.setCustomerId(customerId);
+        accountDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+        try {
+            accountRepository.save(accountDocument);
+        } catch (Exception e) {
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setErrorCode(CAMPAIGN_DETAILS_SAVE_FAILED);
+            databaseError.setFailedUrl(url);
+            databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setStatusCode(500);
 
             resolver.throwApiException(databaseError, e.getMessage());
         }
