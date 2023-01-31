@@ -33,6 +33,7 @@ public class CachingServiceImpl implements CachingService {
     private final static String CAMPAIGN_METRICS_SAVE_FAILED = "CAMPAIGN_METRICS_SAVE_FAILED";
 
     private final static String ACCOUNT_DETAILS_SAVE_FAILED = "ACCOUNT_DETAILS_SAVE_FAILED";
+    private final static String ACCOUNT_DETAILED_REMOVED_FAILED = "ACCOUNT_DETAILS_REMOVED_FAILED";
     private final static String CAMPAIGN_DETAILS_SAVE_FAILED = "CAMPAIGN_DETAILS_SAVE_FAILED";
     private final static String CAMPAIGN_DETAILS_REMOVED_FAILED = "CAMPAIGN_DETAILS_REMOVED_FAILED";
 
@@ -133,7 +134,7 @@ public class CachingServiceImpl implements CachingService {
      */
     @Override
     public void cacheAccountDetails(String customerId) {
-        String url = GAMS_BASE_URL + "9059845250/account/details";
+        String url = GAMS_BASE_URL + customerId + "/account/details";
         ResponseEntity<AccountDetails> response = null;
 
         try {
@@ -154,6 +155,8 @@ public class CachingServiceImpl implements CachingService {
         accountDocument.setAccountDetails(response.getBody());
         accountDocument.setCustomerId(customerId);
         accountDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+        removeExistingAccountDocuments(customerId);
 
         try {
             accountRepository.save(accountDocument);
@@ -218,6 +221,30 @@ public class CachingServiceImpl implements CachingService {
             databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
             databaseError.setErrorMessage(e.getMessage());
             databaseError.setStatusCode(500);
+
+            resolver.throwApiException(databaseError, e.getMessage());
+        }
+    }
+
+    /**
+     * Remove any AccountDocument from the Mongo DB that exist in a given list of CampaignDetails.
+     *
+     * @param customerId the customerId of the Google Ads account
+     */
+    private void removeExistingAccountDocuments(String customerId) {
+        try {
+            AccountDocument accountDocument = accountRepository.findAccountDocumentByCustomerId(customerId);
+
+            // if an account document already exists in the collection remove it
+            if (accountDocument != null)
+                accountRepository.delete(accountDocument);
+
+        } catch (Exception e) {
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setStatusCode(500);
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setFailedUrl("");
+            databaseError.setErrorCode(ACCOUNT_DETAILED_REMOVED_FAILED);
 
             resolver.throwApiException(databaseError, e.getMessage());
         }

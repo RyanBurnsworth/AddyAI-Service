@@ -35,7 +35,7 @@ public class CacheControllerImpl implements CacheController {
 
     @Override
     @PostMapping("/account/details")
-    public ResponseEntity<Void> cacheAccountDetails(String customerId) {
+    public ResponseEntity<Void> cacheAccountDetails(@PathVariable String customerId) {
         cachingService.cacheAccountDetails(customerId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
