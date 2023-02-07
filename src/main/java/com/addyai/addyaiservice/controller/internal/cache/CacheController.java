@@ -6,7 +6,9 @@ import org.springframework.http.ResponseEntity;
 public interface CacheController {
     ResponseEntity<Void> cacheCampaignMetrics(String customerId, CampaignMetricsRequest campaignMetricsRequest);
 
-    ResponseEntity<Void> cacheAllCampaignDetails(String customerId);
+    ResponseEntity<Void> cacheCampaignDetails(String customerId);
 
     ResponseEntity<Void> cacheAccountDetails(String customerId);
+
+    ResponseEntity<Void> cacheAdGroupDetails(String customerId, String campaignId);
 }

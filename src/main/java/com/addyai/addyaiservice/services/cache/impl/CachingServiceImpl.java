@@ -2,8 +2,10 @@ package com.addyai.addyaiservice.services.cache.impl;
 
 import com.addyai.addyaiservice.exception.ApiExceptionResolver;
 import com.addyai.addyaiservice.models.AccountDetails;
+import com.addyai.addyaiservice.models.AdGroupDetails;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.documents.AccountDocument;
+import com.addyai.addyaiservice.models.documents.AdGroupDocument;
 import com.addyai.addyaiservice.models.documents.CampaignDocument;
 import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import com.addyai.addyaiservice.models.error.DatabaseError;
@@ -27,6 +29,7 @@ public class CachingServiceImpl implements CachingService {
     private final static String KEYWORD_METRICS_POST_FIX = "/keyword/metrics/dummy";
 
     private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
+    private final static String ADGROUP_DETAILS_POST_FIX = "/adgroup/details";
     private final static String START_DATE_POST_FIX = "&startDate=";
     private final static String END_DATE_POST_FIX = "&endDate=";
 
@@ -36,9 +39,12 @@ public class CachingServiceImpl implements CachingService {
     private final static String ACCOUNT_DETAILED_REMOVED_FAILED = "ACCOUNT_DETAILS_REMOVED_FAILED";
     private final static String CAMPAIGN_DETAILS_SAVE_FAILED = "CAMPAIGN_DETAILS_SAVE_FAILED";
     private final static String CAMPAIGN_DETAILS_REMOVED_FAILED = "CAMPAIGN_DETAILS_REMOVED_FAILED";
+    private final static String ADGROUP_DETAILS_SAVE_FAILED = "ADGROUP_DETAILS_SAVE_FAILED";
+    private final static String ADGROUP_DETAILS_REMOVED_FAILED = "ADGROUP_DETAILS_REMOVED_FAILED";
 
     private final AccountRepository accountRepository;
     private final CampaignRepository campaignRepository;
+    private final AdGroupRepository adGroupRepository;
 
     private final MetricsRepository metricsRepository;
 
@@ -46,11 +52,13 @@ public class CachingServiceImpl implements CachingService {
 
     public CachingServiceImpl(AccountRepository accountRepository,
                               CampaignRepository campaignRepository,
+                              AdGroupRepository adGroupRepository,
                               MetricsRepository metricsRepository,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
         this.accountRepository = accountRepository;
         this.campaignRepository = campaignRepository;
+        this.adGroupRepository = adGroupRepository;
         this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
     }
@@ -86,7 +94,7 @@ public class CachingServiceImpl implements CachingService {
             url = url + KEYWORD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&keywordId=" + resourceId + datePostFix;
         } else {
             System.out.println("Error");
-            // TODO: Throw an exception
+            // todo Throw an exception
         }
 
         try {
@@ -162,7 +170,7 @@ public class CachingServiceImpl implements CachingService {
             accountRepository.save(accountDocument);
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
-            databaseError.setErrorCode(CAMPAIGN_DETAILS_SAVE_FAILED);
+            databaseError.setErrorCode(ACCOUNT_DETAILS_SAVE_FAILED);
             databaseError.setFailedUrl(url);
             databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
             databaseError.setErrorMessage(e.getMessage());
@@ -217,6 +225,59 @@ public class CachingServiceImpl implements CachingService {
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
             databaseError.setErrorCode(CAMPAIGN_DETAILS_SAVE_FAILED);
+            databaseError.setFailedUrl(url);
+            databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setStatusCode(500);
+
+            resolver.throwApiException(databaseError, e.getMessage());
+        }
+    }
+
+    /**
+     * Fetch the ad groups and cache the details in the database
+     *
+     * @param customerId the customerId of the Google Ads account
+     * @param campaignId the id of the campaign containing the ad groups
+     */
+    @Override
+    public void cacheAdgroupDetails(String customerId, String campaignId) {
+        String url = GAMS_BASE_URL + customerId + ADGROUP_DETAILS_POST_FIX + "?campaignResName=customers/" + customerId
+                + "/campaigns/" + campaignId;
+
+        ResponseEntity<AdGroupDetails[]> response;
+        List<AdGroupDetails> adGroupDetailsList = new ArrayList<>();
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            response = restTemplate.getForEntity(url, AdGroupDetails[].class);
+
+            adGroupDetailsList = Arrays.asList(Objects.requireNonNull(response.getBody()));
+        } catch (Exception ex) {
+            GamsError gamsError = new GamsError();
+            gamsError.setCustomerId(customerId);
+            gamsError.setFailedUrl(url);
+
+            resolver.throwApiException(gamsError, ex.getMessage());
+        }
+
+        List<AdGroupDocument> adGroupDocumentList = new ArrayList<>();
+        adGroupDetailsList.forEach(adGroupDetails -> {
+            AdGroupDocument adGroupDocument = new AdGroupDocument();
+            adGroupDocument.setCustomerId(customerId);
+            adGroupDocument.setAdGroupDetails(adGroupDetails);
+            adGroupDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+            adGroupDocumentList.add(adGroupDocument);
+        });
+
+        removeExistingAdGroupDocuments(customerId, campaignId, adGroupDetailsList);
+
+        try {
+            // save adgroup documents into Mongo database
+            adGroupRepository.saveAll(adGroupDocumentList);
+        } catch (Exception e) {
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setErrorCode(ADGROUP_DETAILS_SAVE_FAILED);
             databaseError.setFailedUrl(url);
             databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
             databaseError.setErrorMessage(e.getMessage());
@@ -285,6 +346,50 @@ public class CachingServiceImpl implements CachingService {
             databaseError.setErrorMessage(e.getMessage());
             databaseError.setFailedUrl("");
             databaseError.setErrorCode(CAMPAIGN_DETAILS_REMOVED_FAILED);
+
+            resolver.throwApiException(databaseError, e.getMessage());
+        }
+    }
+
+    /**
+     * Remove any AdGroupDocument from the Mongo DB that exist in a given list of AdGroupDetails.
+     *
+     * @param customerId         the customerId of the Google Ads account
+     * @param campaignId         a list of campaign details to be removed if existing in the DB
+     * @param adGroupDetailsList a list of ad group details to be removed if already exist in the db
+     */
+    private void removeExistingAdGroupDocuments(String customerId, String campaignId,
+                                                List<AdGroupDetails> adGroupDetailsList) {
+        try {
+            // create the campaignResourceName
+            String campaignResourceName = "customers/" + customerId + "/campaigns/" + campaignId;
+
+            // fetch all CampaignDocuments by the given customerId
+            List<AdGroupDocument> adGroupDocuments
+                    = adGroupRepository.findAllAdGroupDocumentsByCampaign(customerId, campaignResourceName);
+
+            // if there is exists a campaignDocument containing a campaignDetails object with the same
+            // campaign resource name as in our given campaignDetailsList, add to a list to be removed
+            List<AdGroupDocument> documentsToBeRemoved = new ArrayList<>();
+            adGroupDetailsList.forEach(adGroupDetails -> {
+                adGroupDocuments.forEach(adGroupDocument -> {
+                    if (adGroupDetails.getAdGroupResourceName()
+                            .equals(adGroupDocument.getAdGroupDetails().getAdGroupResourceName())) {
+                        documentsToBeRemoved.add(adGroupDocument);
+                    }
+                });
+            });
+
+            // remove any matching documents from the database
+            if (!documentsToBeRemoved.isEmpty()) {
+                adGroupRepository.deleteAll(documentsToBeRemoved);
+            }
+        } catch (Exception e) {
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setStatusCode(500);
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setFailedUrl("");
+            databaseError.setErrorCode(ADGROUP_DETAILS_REMOVED_FAILED);
 
             resolver.throwApiException(databaseError, e.getMessage());
         }

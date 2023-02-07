@@ -18,25 +18,32 @@ public class CacheControllerImpl implements CacheController {
     }
 
     @Override
-    @PostMapping("/campaign/metrics")
-    public ResponseEntity<Void> cacheCampaignMetrics(@PathVariable String customerId,
-                                                     @RequestBody CampaignMetricsRequest campaignMetricsRequest) {
-        cachingService.cacheMetrics(customerId, campaignMetricsRequest.getCampaignId(),
-                campaignMetricsRequest.getStartDate(), campaignMetricsRequest.getEndDate(), Constants.TYPE_ADGROUP);
+    @PostMapping("/account/details")
+    public ResponseEntity<Void> cacheAccountDetails(@PathVariable String customerId) {
+        cachingService.cacheAccountDetails(customerId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     @PostMapping("/campaign/details")
-    public ResponseEntity<Void> cacheAllCampaignDetails(@PathVariable String customerId) {
+    public ResponseEntity<Void> cacheCampaignDetails(@PathVariable String customerId) {
         cachingService.cacheAllCampaignDetails(customerId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
-    @PostMapping("/account/details")
-    public ResponseEntity<Void> cacheAccountDetails(@PathVariable String customerId) {
-        cachingService.cacheAccountDetails(customerId);
+    @PostMapping("/adgroup/details")
+    public ResponseEntity<Void> cacheAdGroupDetails(@PathVariable String customerId, @RequestParam String campaignId) {
+        cachingService.cacheAdgroupDetails(customerId, campaignId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    @PostMapping("/campaign/metrics")
+    public ResponseEntity<Void> cacheCampaignMetrics(@PathVariable String customerId,
+                                                     @RequestBody CampaignMetricsRequest campaignMetricsRequest) {
+        cachingService.cacheMetrics(customerId, campaignMetricsRequest.getCampaignId(),
+                campaignMetricsRequest.getStartDate(), campaignMetricsRequest.getEndDate(), Constants.TYPE_ADGROUP);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
