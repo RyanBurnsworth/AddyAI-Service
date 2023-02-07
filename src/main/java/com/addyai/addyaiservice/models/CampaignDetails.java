@@ -24,7 +24,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CampaignDetails {
+public class CampaignDetails extends BaseDetails {
 
     /**
      * The identifier for the campaign. Auto-generates when the campaign is created.

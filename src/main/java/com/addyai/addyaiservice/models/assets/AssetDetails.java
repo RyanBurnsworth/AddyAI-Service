@@ -1,5 +1,6 @@
 package com.addyai.addyaiservice.models.assets;
 
+import com.addyai.addyaiservice.models.BaseDetails;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SitelinkDetails.class, name = "sitelinks"),
         @JsonSubTypes.Type(value = CallExtensionDetails.class, name = "call")
 })
-public abstract class AssetDetails {
+public abstract class AssetDetails extends BaseDetails {
     private long assetId;
     private String assetName;
     private int assetType;

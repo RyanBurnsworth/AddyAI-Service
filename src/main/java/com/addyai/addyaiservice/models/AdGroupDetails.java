@@ -20,7 +20,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AdGroupDetails {
+public class AdGroupDetails extends BaseDetails {
     /**
      * The identifier value for the AdGroup
      */

@@ -20,7 +20,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class KeywordDetails {
+public class KeywordDetails extends BaseDetails {
     private long keywordId;
 
     private String keywordResourceName;

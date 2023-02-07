@@ -20,21 +20,28 @@ public class CacheControllerImpl implements CacheController {
     @Override
     @PostMapping("/account/details")
     public ResponseEntity<Void> cacheAccountDetails(@PathVariable String customerId) {
-        cachingService.cacheAccountDetails(customerId);
+        cachingService.cacheDetails(customerId, "", "", 0);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     @PostMapping("/campaign/details")
     public ResponseEntity<Void> cacheCampaignDetails(@PathVariable String customerId) {
-        cachingService.cacheAllCampaignDetails(customerId);
+        cachingService.cacheDetails(customerId, "", "", 1);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     @PostMapping("/adgroup/details")
     public ResponseEntity<Void> cacheAdGroupDetails(@PathVariable String customerId, @RequestParam String campaignId) {
-        cachingService.cacheAdgroupDetails(customerId, campaignId);
+        cachingService.cacheDetails(customerId, "", campaignId, 2);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    @PostMapping("/ad/details")
+    public ResponseEntity<Void> cacheAdDetails(@PathVariable String customerId, @RequestParam String adGroupId) {
+        cachingService.cacheDetails(customerId, "", adGroupId, Constants.TYPE_AD);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

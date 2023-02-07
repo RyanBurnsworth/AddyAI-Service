@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AdSchedulingDetails {
+public class AdSchedulingDetails extends BaseDetails {
     private int dayOfWeek;
     private int startHour;
     private int endHour;

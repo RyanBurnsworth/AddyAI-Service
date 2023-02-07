@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AccountDetails {
+public class AccountDetails extends BaseDetails {
     String customerId;
     String resourceName;
     int status;

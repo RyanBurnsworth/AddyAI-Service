@@ -1,5 +1,6 @@
 package com.addyai.addyaiservice.models.ads;
 
+import com.addyai.addyaiservice.models.BaseDetails;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.Setter;
 })
 @Getter
 @Setter
-public abstract class AdDetails {
+public abstract class AdDetails extends BaseDetails {
     private long adId;
     private String adType;
     private String adName;

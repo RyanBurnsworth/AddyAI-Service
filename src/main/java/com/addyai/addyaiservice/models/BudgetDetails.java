@@ -20,7 +20,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BudgetDetails {
+public class BudgetDetails extends BaseDetails {
     /**
      * The identifier for the budget. Auto-generates when the budget is created.
      */

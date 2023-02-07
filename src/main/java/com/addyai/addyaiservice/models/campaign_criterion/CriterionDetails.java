@@ -15,6 +15,7 @@
 
 package com.addyai.addyaiservice.models.campaign_criterion;
 
+import com.addyai.addyaiservice.models.BaseDetails;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = LocationDetails.class, name = "location"),
         @JsonSubTypes.Type(value = DeviceDetails.class, name = "device")
 })
-public abstract class CriterionDetails {
+public abstract class CriterionDetails extends BaseDetails {
     /**
      * The ID of the criterion resource
      */
