@@ -14,11 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.security.InvalidParameterException;
 import java.sql.Timestamp;
 import java.util.*;
 
 @Service
 public class CachingServiceImpl implements CachingService {
+    // TODO Remove hardcoded urls and dummy postfixes
     private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
     private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy";
     private final static String ADGROUP_METRICS_POST_FIX = "/adgroup/metrics/dummy";
@@ -28,17 +30,27 @@ public class CachingServiceImpl implements CachingService {
     private final static String ACCOUNT_DETAILS_POST_FIX = "/account/details";
     private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
     private final static String ADGROUP_DETAILS_POST_FIX = "/adgroup/details";
-    private final static String START_DATE_POST_FIX = "&startDate=";
-    private final static String END_DATE_POST_FIX = "&endDate=";
+    private final static String AD_DETAILS_POST_FIX = "/ad/details";
+    private final static String KEYWORD_DETAILS_POST_FIX = "/keyword/details";
 
     private final static String METRICS_SAVE_FAILED = "METRICS_SAVE_FAILED";
+    private final static String METRICS_REMOVE_FAILED = "METRICS_REMOVE_FAILED";
     private final static String DETAILS_SAVE_FAILED = "DETAILS_SAVE_FAILED";
     private final static String DETAILS_REMOVE_FAILED = "DETAILS_REMOVE_FAILED";
+
+    private final static String START_DATE_POST_FIX = "&startDate=";
+    private final static String END_DATE_POST_FIX = "&endDate=";
+    private final static String CAMPAIGN_RES_PART = "/campaigns/";
+    private final static String ADGROUP_RES_PART = "/adGroups";
+    private final static String CUSTOMERS_RES_PART = "customers/";
+    private final static String CAMPAIGN_ID_URL_PART = "?campaignId=";
+    private final static String ADGROUP_ID_URL_PART = "?adGroupId=";
 
     private final AccountRepository accountRepository;
     private final CampaignRepository campaignRepository;
     private final AdGroupRepository adGroupRepository;
     private final AdRepository adRepository;
+    private final KeywordRepository keywordRepository;
 
     private final MetricsRepository metricsRepository;
 
@@ -48,6 +60,7 @@ public class CachingServiceImpl implements CachingService {
                               CampaignRepository campaignRepository,
                               AdGroupRepository adGroupRepository,
                               AdRepository adRepository,
+                              KeywordRepository keywordRepository,
                               MetricsRepository metricsRepository,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
@@ -55,6 +68,7 @@ public class CachingServiceImpl implements CachingService {
         this.campaignRepository = campaignRepository;
         this.adGroupRepository = adGroupRepository;
         this.adRepository = adRepository;
+        this.keywordRepository = keywordRepository;
         this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
     }
@@ -78,11 +92,11 @@ public class CachingServiceImpl implements CachingService {
         if (type == Constants.TYPE_CAMPAIGN) {
             url = url + CAMPAIGN_METRICS_POST_FIX + "?campaignResourceName=" + resourceId + datePostFix;
         } else if (type == Constants.TYPE_ADGROUP) {
-            url = url + ADGROUP_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&campaignId=" + resourceId + datePostFix;
+            url = url + ADGROUP_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&campaignId=" + resourceId + datePostFix;
         } else if (type == Constants.TYPE_AD) {
-            url = url + AD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&adId=" + resourceId + datePostFix;
+            url = url + AD_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&adId=" + resourceId + datePostFix;
         } else if (type == Constants.TYPE_KEYWORD) {
-            url = url + KEYWORD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&keywordId=" + resourceId + datePostFix;
+            url = url + KEYWORD_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&keywordId=" + resourceId + datePostFix;
         } else {
             System.out.println("Error");
             // todo Throw an exception
@@ -142,21 +156,20 @@ public class CachingServiceImpl implements CachingService {
                 ResponseEntity<CampaignDetails[]> response = restTemplate.getForEntity(url, CampaignDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
             } else if (type == Constants.TYPE_ADGROUP) {
-                String campaignResourceName = "customers/" + customerId + "/campaigns/" + parentResourceId;
-                url = url + customerId + ADGROUP_DETAILS_POST_FIX + "?campaignResName=" + campaignResourceName;
+                String campaignResourceName = CUSTOMERS_RES_PART + customerId + CAMPAIGN_RES_PART + parentResourceId;
+                url = url + customerId + ADGROUP_DETAILS_POST_FIX + CAMPAIGN_ID_URL_PART + campaignResourceName;
                 ResponseEntity<AdGroupDetails[]> response = restTemplate.getForEntity(url, AdGroupDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
             } else if (type == Constants.TYPE_AD) {
-                url = url + AD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&adId=" + resourceId;
+                url = url + customerId + AD_DETAILS_POST_FIX + ADGROUP_ID_URL_PART + parentResourceId;
                 ResponseEntity<AdDetails[]> response = restTemplate.getForEntity(url, AdDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
             } else if (type == Constants.TYPE_KEYWORD) {
-                url = url + KEYWORD_METRICS_POST_FIX + "?adGroupId=" + resourceId + "&keywordId=" + resourceId;
+                url = url + customerId + KEYWORD_DETAILS_POST_FIX + ADGROUP_ID_URL_PART + parentResourceId;
                 ResponseEntity<KeywordDetails[]> response = restTemplate.getForEntity(url, KeywordDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
             } else {
-                System.out.println("Error");
-                // todo Throw an exception
+                throw new InvalidParameterException("An invalid type parameter has been passed.");
             }
         } catch (Exception ex) {
             GamsError gamsError = new GamsError();
@@ -205,6 +218,32 @@ public class CachingServiceImpl implements CachingService {
 
                 removeExistingDetailsDocuments(customerId, parentResourceId, details, Constants.TYPE_ADGROUP);
                 adGroupRepository.saveAll(adGroupDocumentList);
+            } else if (type == Constants.TYPE_AD) {
+                List<AdDocument> adDocumentList = new ArrayList<>();
+                details.forEach(adDetails -> {
+                    AdDocument adDocument = new AdDocument();
+                    adDocument.setAdDetails((AdDetails) adDetails);
+                    adDocument.setCustomerId(customerId);
+                    adDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+                    adDocumentList.add(adDocument);
+                });
+
+                removeExistingDetailsDocuments(customerId, parentResourceId, details, Constants.TYPE_AD);
+                adRepository.saveAll(adDocumentList);
+            } else if (type == Constants.TYPE_KEYWORD) {
+                List<KeywordDocument> keywordDocumentList = new ArrayList<>();
+                details.forEach(keywordDetails -> {
+                    KeywordDocument keywordDocument = new KeywordDocument();
+                    keywordDocument.setKeywordDetails((KeywordDetails) keywordDetails);
+                    keywordDocument.setCustomerId(customerId);
+                    keywordDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+                    keywordDocumentList.add(keywordDocument);
+                });
+
+                removeExistingDetailsDocuments(customerId, parentResourceId, details, Constants.TYPE_KEYWORD);
+                keywordRepository.saveAll(keywordDocumentList);
             }
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
@@ -241,7 +280,7 @@ public class CachingServiceImpl implements CachingService {
                 if (!removableDocuments.isEmpty())
                     campaignRepository.deleteAll(removableDocuments);
             } else if (type == Constants.TYPE_ADGROUP) {
-                String campaignResourceName = "customers/" + customerId + "/campaigns/" + parentResourceId;
+                String campaignResourceName = CUSTOMERS_RES_PART + customerId + CAMPAIGN_RES_PART + parentResourceId;
                 List<AdGroupDocument> removableDocuments = new ArrayList<>();
                 List<AdGroupDocument> existingDocuments = adGroupRepository.findAllAdGroupDocumentsByCampaign(customerId,
                         campaignResourceName);
@@ -257,7 +296,7 @@ public class CachingServiceImpl implements CachingService {
 
                 adGroupRepository.deleteAll(removableDocuments);
             } else if (type == Constants.TYPE_AD) {
-                String adGroupResourceName = "customers/" + customerId + "/adGroups/" + parentResourceId;
+                String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + parentResourceId;
                 List<AdDocument> removableDocuments = new ArrayList<>();
                 List<AdDocument> existingDocuments = adRepository.findAllAdGroupDocumentsByAdGroup(customerId,
                         adGroupResourceName);
@@ -272,6 +311,22 @@ public class CachingServiceImpl implements CachingService {
                 });
 
                 adRepository.deleteAll(removableDocuments);
+            } else if (type == Constants.TYPE_KEYWORD) {
+                String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + parentResourceId;
+                List<KeywordDocument> removableDocuments = new ArrayList<>();
+                List<KeywordDocument> existingDocuments = keywordRepository.findAllKeywordDocumentsByAdGroup(customerId,
+                        adGroupResourceName);
+
+                detailsList.forEach(details -> {
+                    KeywordDetails keywordDetails = (KeywordDetails) details;
+                    existingDocuments.forEach(document -> {
+                        if (keywordDetails.getKeywordId() == document.getKeywordDetails().getKeywordId()) {
+                            removableDocuments.add(document);
+                        }
+                    });
+                });
+
+                keywordRepository.deleteAll(removableDocuments);
             }
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
@@ -310,8 +365,18 @@ public class CachingServiceImpl implements CachingService {
             });
         });
 
-        // TODO throw an exception if a database failure occurs
-        if (!metricsDocumentsToBeRemoved.isEmpty())
-            metricsRepository.deleteAll(metricsDocumentsToBeRemoved);
+        try {
+            if (!metricsDocumentsToBeRemoved.isEmpty())
+                metricsRepository.deleteAll(metricsDocumentsToBeRemoved);
+        } catch (Exception e) {
+            DatabaseError databaseError = new DatabaseError();
+            databaseError.setErrorCode(METRICS_REMOVE_FAILED);
+            databaseError.setFailedUrl("");
+            databaseError.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            databaseError.setErrorMessage(e.getMessage());
+            databaseError.setStatusCode(500);
+
+            resolver.throwApiException(databaseError, e.getMessage());
+        }
     }
 }

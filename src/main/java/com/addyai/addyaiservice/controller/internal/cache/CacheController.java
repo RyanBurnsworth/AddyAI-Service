@@ -12,4 +12,6 @@ public interface CacheController {
 
     ResponseEntity<Void> cacheAdGroupDetails(String customerId, String campaignId);
     ResponseEntity<Void> cacheAdDetails(String customerId, String adGroupId);
+
+    ResponseEntity<Void> cacheKeywordDetails(String customerId, String adGroupId);
 }

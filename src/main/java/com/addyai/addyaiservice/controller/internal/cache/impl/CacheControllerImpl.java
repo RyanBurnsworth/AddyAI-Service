@@ -46,6 +46,13 @@ public class CacheControllerImpl implements CacheController {
     }
 
     @Override
+    @PostMapping("/keyword/details")
+    public ResponseEntity<Void> cacheKeywordDetails(@PathVariable String customerId, @RequestParam String adGroupId) {
+        cachingService.cacheDetails(customerId, "", adGroupId, Constants.TYPE_KEYWORD);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
     @PostMapping("/campaign/metrics")
     public ResponseEntity<Void> cacheCampaignMetrics(@PathVariable String customerId,
                                                      @RequestBody CampaignMetricsRequest campaignMetricsRequest) {
