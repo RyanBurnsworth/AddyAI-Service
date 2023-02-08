@@ -9,7 +9,14 @@ public class Constants {
     public final static int TYPE_AD = 3;
     public final static int TYPE_KEYWORD = 4;
     public final static int TYPE_ASSET = 5;
-    public final static int TYPE_DEVICE = 6;
+
+    // WHAT?! No 6?
 
     public final static int TYPE_CONVERSION = 7;
+    public final static int TYPE_DEVICE_ACCOUNT = 8;
+    public final static int TYPE_DEVICE_CAMPAIGN = 9;
+    public final static int TYPE_DEVICE_ADGROUP = 10;
+    public final static int TYPE_DEVICE_AD = 11;
+    public final static int TYPE_DEVICE_KEYWORD = 12;
+
 }
