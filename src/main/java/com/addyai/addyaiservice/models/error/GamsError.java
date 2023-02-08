@@ -11,15 +11,8 @@ public class GamsError extends InternalError {
 
     String customerId;
 
-    String campaignId;
-
-    String adGroupId;
-
-    String adId;
-
-    String keywordId;
-
-    String assetId;
+    String resourceId;
+    String parentResourceId;
 
     @Override
     public String getTimestamp() {
