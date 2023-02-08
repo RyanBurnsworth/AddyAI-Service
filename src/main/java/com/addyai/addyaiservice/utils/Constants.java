@@ -10,4 +10,6 @@ public class Constants {
     public final static int TYPE_KEYWORD = 4;
     public final static int TYPE_ASSET = 5;
     public final static int TYPE_DEVICE = 6;
+
+    public final static int TYPE_CONVERSION = 7;
 }

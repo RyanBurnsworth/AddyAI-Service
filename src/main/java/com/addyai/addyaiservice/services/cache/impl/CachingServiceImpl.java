@@ -4,6 +4,7 @@ import com.addyai.addyaiservice.exception.ApiExceptionResolver;
 import com.addyai.addyaiservice.models.*;
 import com.addyai.addyaiservice.models.ads.AdDetails;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
+import com.addyai.addyaiservice.models.assets.AssetDetails;
 import com.addyai.addyaiservice.models.documents.*;
 import com.addyai.addyaiservice.models.error.DatabaseError;
 import com.addyai.addyaiservice.models.error.GamsError;
@@ -32,7 +33,8 @@ public class CachingServiceImpl implements CachingService {
     private final static String ADGROUP_DETAILS_POST_FIX = "/adgroup/details";
     private final static String AD_DETAILS_POST_FIX = "/ad/details";
     private final static String KEYWORD_DETAILS_POST_FIX = "/keyword/details";
-
+    private final static String ASSET_DETAILS_POST_FIX = "/assets/details";
+    private final static String CONVERSION_DETAILS_POST_FIX = "/conversions/details";
     private final static String METRICS_SAVE_FAILED = "METRICS_SAVE_FAILED";
     private final static String METRICS_REMOVE_FAILED = "METRICS_REMOVE_FAILED";
     private final static String DETAILS_SAVE_FAILED = "DETAILS_SAVE_FAILED";
@@ -51,6 +53,8 @@ public class CachingServiceImpl implements CachingService {
     private final AdGroupRepository adGroupRepository;
     private final AdRepository adRepository;
     private final KeywordRepository keywordRepository;
+    private final AssetRepository assetRepository;
+    private final ConversionRepository conversionRepository;
 
     private final MetricsRepository metricsRepository;
 
@@ -61,6 +65,8 @@ public class CachingServiceImpl implements CachingService {
                               AdGroupRepository adGroupRepository,
                               AdRepository adRepository,
                               KeywordRepository keywordRepository,
+                              AssetRepository assetRepository,
+                              ConversionRepository conversionRepository,
                               MetricsRepository metricsRepository,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
@@ -69,6 +75,8 @@ public class CachingServiceImpl implements CachingService {
         this.adGroupRepository = adGroupRepository;
         this.adRepository = adRepository;
         this.keywordRepository = keywordRepository;
+        this.assetRepository = assetRepository;
+        this.conversionRepository = conversionRepository;
         this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
     }
@@ -168,7 +176,16 @@ public class CachingServiceImpl implements CachingService {
                 url = url + customerId + KEYWORD_DETAILS_POST_FIX + ADGROUP_ID_URL_PART + parentResourceId;
                 ResponseEntity<KeywordDetails[]> response = restTemplate.getForEntity(url, KeywordDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
-            } else {
+            } else if (type == Constants.TYPE_ASSET) {
+                url = url + customerId + ASSET_DETAILS_POST_FIX;
+                ResponseEntity<AssetDetails[]> response = restTemplate.getForEntity(url, AssetDetails[].class);
+                details = Arrays.asList(Objects.requireNonNull(response.getBody()));
+            } else if (type == Constants.TYPE_CONVERSION) {
+                url = url + customerId + CONVERSION_DETAILS_POST_FIX;
+                ResponseEntity<ConversionDetails[]> response = restTemplate.getForEntity(url, ConversionDetails[].class);
+                details = Arrays.asList(Objects.requireNonNull(response.getBody()));
+             }
+            else {
                 throw new InvalidParameterException("An invalid type parameter has been passed.");
             }
         } catch (Exception ex) {
@@ -244,6 +261,32 @@ public class CachingServiceImpl implements CachingService {
 
                 removeExistingDetailsDocuments(customerId, parentResourceId, details, Constants.TYPE_KEYWORD);
                 keywordRepository.saveAll(keywordDocumentList);
+            } else if (type == Constants.TYPE_ASSET) {
+                List<AssetDocument> assetDocumentList = new ArrayList<>();
+                details.forEach(assetDetails -> {
+                    AssetDocument assetDocument = new AssetDocument();
+                    assetDocument.setAssetDetails((AssetDetails) assetDetails);
+                    assetDocument.setCustomerId(customerId);
+                    assetDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+                    assetDocumentList.add(assetDocument);
+                });
+
+                removeExistingDetailsDocuments(customerId, "", details, Constants.TYPE_ASSET);
+                assetRepository.saveAll(assetDocumentList);
+            } else if (type == Constants.TYPE_CONVERSION) {
+                List<ConversionDocument> conversionDocumentsList = new ArrayList<>();
+                details.forEach(conversionDetails -> {
+                    ConversionDocument conversionDocument = new ConversionDocument();
+                    conversionDocument.setConversionDetails((ConversionDetails) conversionDetails);
+                    conversionDocument.setCustomerId(customerId);
+                    conversionDocument.setLastUpdated(new Timestamp(System.currentTimeMillis()).toString());
+
+                    conversionDocumentsList.add(conversionDocument);
+                });
+
+                removeExistingDetailsDocuments(customerId, "", details, Constants.TYPE_CONVERSION);
+                conversionRepository.saveAll(conversionDocumentsList);
             }
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
@@ -294,7 +337,8 @@ public class CachingServiceImpl implements CachingService {
                     });
                 });
 
-                adGroupRepository.deleteAll(removableDocuments);
+                if (!removableDocuments.isEmpty())
+                    adGroupRepository.deleteAll(removableDocuments);
             } else if (type == Constants.TYPE_AD) {
                 String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + parentResourceId;
                 List<AdDocument> removableDocuments = new ArrayList<>();
@@ -310,7 +354,8 @@ public class CachingServiceImpl implements CachingService {
                     });
                 });
 
-                adRepository.deleteAll(removableDocuments);
+                if (!removableDocuments.isEmpty())
+                    adRepository.deleteAll(removableDocuments);
             } else if (type == Constants.TYPE_KEYWORD) {
                 String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + parentResourceId;
                 List<KeywordDocument> removableDocuments = new ArrayList<>();
@@ -326,7 +371,38 @@ public class CachingServiceImpl implements CachingService {
                     });
                 });
 
-                keywordRepository.deleteAll(removableDocuments);
+                if (!removableDocuments.isEmpty())
+                    keywordRepository.deleteAll(removableDocuments);
+            } else if (type == Constants.TYPE_ASSET) {
+                List<AssetDocument> removableDocuments = new ArrayList<>();
+                List<AssetDocument> existingDocuments = assetRepository.findAllAssetDocuments(customerId);
+
+                detailsList.forEach(details -> {
+                    AssetDetails assetDetails = (AssetDetails) details;
+                    existingDocuments.forEach(document -> {
+                        if (assetDetails.getAssetId() == document.getAssetDetails().getAssetId()) {
+                            removableDocuments.add(document);
+                        }
+                    });
+                });
+
+                if (!removableDocuments.isEmpty())
+                    assetRepository.deleteAll(removableDocuments);
+            } else if (type == Constants.TYPE_CONVERSION) {
+                List<ConversionDocument> removableDocuments = new ArrayList<>();
+                List<ConversionDocument> existingDocuments = conversionRepository.findAllConversionDocuments(customerId);
+
+                detailsList.forEach(details -> {
+                    ConversionDetails conversionDetails = (ConversionDetails) details;
+                    existingDocuments.forEach(document -> {
+                        if (conversionDetails.getActionId() == document.getConversionDetails().getActionId()) {
+                            removableDocuments.add(document);
+                        }
+                    });
+                });
+
+                if (!removableDocuments.isEmpty())
+                    conversionRepository.deleteAll(removableDocuments);
             }
         } catch (Exception e) {
             DatabaseError databaseError = new DatabaseError();
