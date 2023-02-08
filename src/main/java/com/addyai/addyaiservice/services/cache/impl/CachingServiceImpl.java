@@ -23,10 +23,7 @@ import java.util.*;
 public class CachingServiceImpl implements CachingService {
     // TODO Remove hardcoded urls and dummy postfixes
     private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
-    private final static String CAMPAIGN_METRICS_POST_FIX = "/campaign/metrics/dummy";
-    private final static String ADGROUP_METRICS_POST_FIX = "/adgroup/metrics/dummy";
-    private final static String AD_METRICS_POST_FIX = "/ad/metrics/dummy";
-    private final static String KEYWORD_METRICS_POST_FIX = "/keyword/metrics/dummy";
+    private final static String METRICS_URL_POST_FIX = "/metrics/date/demo";
 
     private final static String ACCOUNT_DETAILS_POST_FIX = "/account/details";
     private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
@@ -47,6 +44,7 @@ public class CachingServiceImpl implements CachingService {
     private final static String CUSTOMERS_RES_PART = "customers/";
     private final static String CAMPAIGN_ID_URL_PART = "?campaignId=";
     private final static String ADGROUP_ID_URL_PART = "?adGroupId=";
+    private final static String RESOURCE_TYPE_URL_PART = "?resourceType=";
 
     private final AccountRepository accountRepository;
     private final CampaignRepository campaignRepository;
@@ -82,10 +80,10 @@ public class CachingServiceImpl implements CachingService {
     }
 
     /**
-     * Fetch and store the campaign metrics in the Campaign_Metrics collection
+     * Fetch metrics from a client's account and cache metrics in the Mongo database
      *
      * @param customerId the customer id of the Google Ads account
-     * @param resourceId the id of the campaign to fetch metrics from
+     * @param resourceId the id of the resource to fetch metrics from
      * @param startDate  the start of the date range
      * @param endDate    the end of the date range
      * @param type       the type of resource (0 - Account, 1 - Campaign, etc.)
@@ -97,17 +95,17 @@ public class CachingServiceImpl implements CachingService {
         String url = GAMS_BASE_URL + customerId;
         String datePostFix = START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
+        // TODO re-write urls when moving to production
         if (type == Constants.TYPE_CAMPAIGN) {
-            url = url + CAMPAIGN_METRICS_POST_FIX + "?campaignResourceName=" + resourceId + datePostFix;
+            url = url + METRICS_URL_POST_FIX + RESOURCE_TYPE_URL_PART + "campaign";
         } else if (type == Constants.TYPE_ADGROUP) {
-            url = url + ADGROUP_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&campaignId=" + resourceId + datePostFix;
+            url = url + METRICS_URL_POST_FIX + RESOURCE_TYPE_URL_PART + "adgroup";
         } else if (type == Constants.TYPE_AD) {
-            url = url + AD_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&adId=" + resourceId + datePostFix;
+            url = url + METRICS_URL_POST_FIX + RESOURCE_TYPE_URL_PART + "ad";
         } else if (type == Constants.TYPE_KEYWORD) {
-            url = url + KEYWORD_METRICS_POST_FIX + ADGROUP_ID_URL_PART + resourceId + "&keywordId=" + resourceId + datePostFix;
+            url = url + METRICS_URL_POST_FIX + RESOURCE_TYPE_URL_PART + "keyword";
         } else {
-            System.out.println("Error");
-            // todo Throw an exception
+            throw new InvalidParameterException("An invalid type parameter has been passed.");
         }
 
         try {
@@ -148,6 +146,14 @@ public class CachingServiceImpl implements CachingService {
         }
     }
 
+    /**
+     * Fetch and cache details from the client's account
+     *
+     * @param customerId       the customer id of the Google Ads account
+     * @param resourceId       the id of the resource to fetch metrics from
+     * @param parentResourceId the id of the parent of the resource to fetch metrics from
+     * @param type             the type of resource (0 - Account, 1 - Campaign, etc.)
+     */
     public void cacheDetails(String customerId, String resourceId, String parentResourceId, int type) {
         List<BaseDetails> details = new ArrayList<>();
         RestTemplate restTemplate = new RestTemplate();
@@ -184,8 +190,7 @@ public class CachingServiceImpl implements CachingService {
                 url = url + customerId + CONVERSION_DETAILS_POST_FIX;
                 ResponseEntity<ConversionDetails[]> response = restTemplate.getForEntity(url, ConversionDetails[].class);
                 details = Arrays.asList(Objects.requireNonNull(response.getBody()));
-             }
-            else {
+            } else {
                 throw new InvalidParameterException("An invalid type parameter has been passed.");
             }
         } catch (Exception ex) {
@@ -300,6 +305,14 @@ public class CachingServiceImpl implements CachingService {
         }
     }
 
+    /**
+     * Remove existing resource details documents from the Mongo DB
+     *
+     * @param customerId       the customer id of the Google Ads account
+     * @param parentResourceId the id of the parent of the resource to fetch details from
+     * @param detailsList      a list of resource details to compare the existing details against
+     * @param type             the type of resource (0 - Account, 1 - Campaign, etc.)
+     */
     private void removeExistingDetailsDocuments(String customerId, String parentResourceId, List<BaseDetails> detailsList, int type) {
         try {
             if (type == Constants.TYPE_ACCOUNT) {
