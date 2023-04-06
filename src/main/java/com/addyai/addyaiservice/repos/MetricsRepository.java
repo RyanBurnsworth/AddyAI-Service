@@ -8,9 +8,12 @@ import java.util.Date;
 import java.util.List;
 
 public interface MetricsRepository extends MongoRepository<MetricsDocument, String> {
-    @Query("{'resourceId': ?0, 'date' : { $gte: ?1, $lte: ?2 } }")
-    List<MetricsDocument> findAllMetricsInDateRange(String resourceId, Date startDate, Date endDate);
-
     @Query("{'customerId': ?0, 'type' : ?1 }")
     List<MetricsDocument> findAllMetricsByCustomerIdAndType(String customerId, int type);
+
+    @Query("{'customerId': ?0, 'type' : ?1, 'date' : { $gte: ?2, $lte: ?3 } }")
+    List<MetricsDocument> findMetricsByCustomerIdAndTypeWithinDateRange(String customerId, int type, Date startDate, Date endDate);
+
+    @Query("{'customerId': ?0, 'resourceId' : ?1, 'date' : { $gte: ?2, $lte: ?3 } }")
+    List<MetricsDocument> findMetricsByCustomerIdAndResourceIdWithinDateRange(String customerId, String resourceId, Date startDate, Date endDate);
 }

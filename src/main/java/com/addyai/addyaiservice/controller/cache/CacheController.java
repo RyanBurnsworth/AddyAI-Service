@@ -1,6 +1,5 @@
-package com.addyai.addyaiservice.controller.internal.cache;
+package com.addyai.addyaiservice.controller.cache;
 
-import com.addyai.addyaiservice.models.requests.CampaignMetricsRequest;
 import org.springframework.http.ResponseEntity;
 
 public interface CacheController {
