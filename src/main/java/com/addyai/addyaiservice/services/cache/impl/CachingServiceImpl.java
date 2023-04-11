@@ -65,7 +65,7 @@ public class CachingServiceImpl implements CachingService {
     @Override
     public void cacheClientAccount(String customerId, String startDate, String endDate) {
         cacheClientAccountDetails(customerId);
-        cacheClientAccountMetrics(customerId, startDate, endDate);
+        //cacheClientAccountMetrics(customerId, startDate, endDate);
     }
 
     private void cacheClientAccountDetails(String customerId) {
@@ -139,35 +139,25 @@ public class CachingServiceImpl implements CachingService {
         String datePostFix = START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
         if (type == Constants.TYPE_ACCOUNT) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_ACCOUNT;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_ACCOUNT);
         } else if (type == Constants.TYPE_CAMPAIGN) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_CAMPAIGN;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_CAMPAIGN);
         } else if (type == Constants.TYPE_ADGROUP) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_ADGROUP;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_ADGROUP);
         } else if (type == Constants.TYPE_AD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_AD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_AD);
         } else if (type == Constants.TYPE_KEYWORD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_KEYWORD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_KEYWORD);
         } else if (type == Constants.TYPE_DEVICE_ACCOUNT) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_ACCOUNT;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_ACCOUNT);
         } else if (type == Constants.TYPE_DEVICE_CAMPAIGN) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_CAMPAIGN;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_CAMPAIGN);
         } else if (type == Constants.TYPE_DEVICE_ADGROUP) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_ADGROUP;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_ADGROUP);
         } else if (type == Constants.TYPE_DEVICE_AD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_AD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_AD);
         } else if (type == Constants.TYPE_DEVICE_KEYWORD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_KEYWORD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_KEYWORD);
         } else {
             throw new InvalidParameterException("An invalid type parameter has been passed.");
         }
@@ -525,5 +515,10 @@ public class CachingServiceImpl implements CachingService {
 
             resolver.throwApiException(databaseError, e.getMessage());
         }
+    }
+
+    private String buildUrl(String url, String resourceId, String parentResourceId, String datePostFix, String param) {
+        return url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
+                datePostFix + RESOURCE_TYPE_URL_PART + param;
     }
 }
