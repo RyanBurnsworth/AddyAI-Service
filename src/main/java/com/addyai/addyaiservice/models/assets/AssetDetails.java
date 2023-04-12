@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SitelinkDetails.class, name = "sitelinks"),
-        @JsonSubTypes.Type(value = CallExtensionDetails.class, name = "call")
+        @JsonSubTypes.Type(value = CallExtensionDetails.class, name = "call"),
+        @JsonSubTypes.Type(value = CalloutExtensionDetails.class, name = "callout"),
 })
 public abstract class AssetDetails extends BaseDetails {
     private long assetId;

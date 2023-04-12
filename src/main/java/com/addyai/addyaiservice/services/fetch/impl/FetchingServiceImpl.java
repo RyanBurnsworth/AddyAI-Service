@@ -2,6 +2,8 @@ package com.addyai.addyaiservice.services.fetch.impl;
 
 import com.addyai.addyaiservice.models.AccountBasics;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
+import com.addyai.addyaiservice.models.assets.CalloutExtensionDetails;
+import com.addyai.addyaiservice.models.assets.SitelinkDetails;
 import com.addyai.addyaiservice.models.documents.*;
 import com.addyai.addyaiservice.repos.*;
 import com.addyai.addyaiservice.services.fetch.FetchingService;
@@ -211,9 +213,29 @@ public class FetchingServiceImpl implements FetchingService {
                 });
                 accountBasics.setTop10KeywordsByAdGroup(keywordsResourceList);
 
-                // TODO: Update to use extensions
                 // Fetch the active extensions assigned to the account
                 List<AccountBasics.Extension> extensionsResourceList = new ArrayList<>();
+                List<AssetDocument> assetDocuments = assetRepository.findAllAssetDocuments(customerId);
+
+                assetDocuments.forEach(asset -> {
+                    AccountBasics.Extension extension = new AccountBasics.Extension();
+                    // Sitelinks AssetType is 11
+                    if (asset.getAssetDetails().getAssetType() == 11) {
+                        SitelinkDetails sitelinkDetails = (SitelinkDetails) asset.getAssetDetails();
+                        extension.setLink(sitelinkDetails.getFinalUrlList().get(0));
+                        extension.setResourceName(sitelinkDetails.getAssetName());
+                        extension.setText(sitelinkDetails.getLinkText());
+                        extension.setType("sitelinks");
+
+                        extensionsResourceList.add(extension);
+                    } else if (asset.getAssetDetails().getAssetType() == 9) {
+                        CalloutExtensionDetails calloutExtensionDetails = (CalloutExtensionDetails) asset.getAssetDetails();
+                        extension.setText(calloutExtensionDetails.getText());
+                        extension.setType("callout");
+
+                        extensionsResourceList.add(extension);
+                    }
+                });
                 accountBasics.setExtensions(extensionsResourceList);
             });
         });
