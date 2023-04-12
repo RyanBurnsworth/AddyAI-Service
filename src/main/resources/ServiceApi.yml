@@ -1,0 +1,92 @@
+servers:
+  - description: AddyAI's proxy service for communicating with GAMS and the UI
+    url: http://localhost
+info:
+  description: Service that caches account data that is retrieved from GAMS. This data is then served via API to the UI.
+  version: 1.0.0
+  title: Proxy service
+  contact:
+    - ryanburnsworth@gmail.com
+  tags:
+    - name: external
+      description: The Addy AI Proxy service
+  paths:
+    /api/v1/{customerId}/cache/account:
+    get:
+      tags:
+        - external
+        - Account
+      summary: Fetch and cache all account data for a given customerId
+      operationId: account
+      description: Fetches account, campaign, adgroup, ads, keywords and more through GAMS and caches in the MongoDB.
+      parameters:
+        - in: path
+          name: customerId
+          description: the id of the customer's account
+          required: true
+          schema:
+            type: string
+        - in: request
+          name: startDate
+          description: the beginning of the date range to fetch data from
+          required: true
+          schema:
+            type: string
+        - in: request
+          name: endDate
+          description: the end of the date range to fetch data from
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/AccountDetails"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/GAMSException"
+                description: "Invalid or Malformed Request"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/GAMSException"
+                description: "The endpoint supplied was not found"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/DatabaseException"
+                description: "An internal server error has occurred"
+
+    incomplete:
+
+    GAMSException:
+      title: GAMSException
+      type: object
+      properties:
+        timeStamp:
+          type: date
+          description: the timestamp of the error occurrence
+        errorCode:
+          type: string
+          description: the error code
+        errorMessage:
+          type: string
+          description: the description of the error

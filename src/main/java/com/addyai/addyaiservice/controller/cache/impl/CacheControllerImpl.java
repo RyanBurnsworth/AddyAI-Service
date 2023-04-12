@@ -1,6 +1,6 @@
-package com.addyai.addyaiservice.controller.internal.cache.impl;
+package com.addyai.addyaiservice.controller.cache.impl;
 
-import com.addyai.addyaiservice.controller.internal.cache.CacheController;
+import com.addyai.addyaiservice.controller.cache.CacheController;
 import com.addyai.addyaiservice.services.cache.CachingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

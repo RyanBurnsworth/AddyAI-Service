@@ -1,5 +1,6 @@
 package com.addyai.addyaiservice.models.ads;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,9 +9,13 @@ import java.util.List;
 @Getter
 @Setter
 public class ResponsiveSearchAdDetails extends AdDetails {
+    @JsonProperty
     private List<String> headlines;
+    @JsonProperty
     private List<String> descriptions;
+    @JsonProperty
     private List<String> paths;
+    @JsonProperty
     private String finalUrl;
 
     @Override

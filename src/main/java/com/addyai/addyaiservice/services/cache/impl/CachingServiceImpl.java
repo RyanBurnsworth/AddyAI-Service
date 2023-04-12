@@ -10,6 +10,7 @@ import com.addyai.addyaiservice.models.error.DatabaseError;
 import com.addyai.addyaiservice.models.error.GamsError;
 import com.addyai.addyaiservice.repos.*;
 import com.addyai.addyaiservice.services.cache.CachingService;
+import com.addyai.addyaiservice.services.fetch.FetchingService;
 import com.addyai.addyaiservice.utils.Constants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,46 +20,14 @@ import java.security.InvalidParameterException;
 import java.sql.Timestamp;
 import java.util.*;
 
+import static com.addyai.addyaiservice.utils.Constants.*;
+
+/**
+ * Fetches details and metrics from Google through the Google Ads Management Service.
+ * The details and metrics are then cached in the MongoDB.
+ */
 @Service
 public class CachingServiceImpl implements CachingService {
-    // TODO Remove hardcoded urls and dummy postfixes
-    private final static String GAMS_BASE_URL = "http://localhost:8080/api/v1/";
-    private final static String METRICS_URL_POST_FIX = "/metrics/date/demo";
-
-    private final static String CONST_ACCOUNT = "account";
-    private final static String CONST_CAMPAIGN = "campaign";
-    private final static String CONST_ADGROUP = "adgroup";
-    private final static String CONST_AD = "ad";
-    private final static String CONST_KEYWORD = "keyword";
-    private final static String CONST_DEVICE_ACCOUNT = "device_account";
-    private final static String CONST_DEVICE_CAMPAIGN = "device_campaign";
-    private final static String CONST_DEVICE_ADGROUP = "device_adgroup";
-    private final static String CONST_DEVICE_AD = "device_ad";
-    private final static String CONST_DEVICE_KEYWORD = "device_keyword";
-
-    private final static String ACCOUNT_DETAILS_POST_FIX = "/account/details";
-    private final static String CAMPAIGN_DETAILS_POST_FIX = "/campaign/details";
-    private final static String ADGROUP_DETAILS_POST_FIX = "/adgroup/details";
-    private final static String AD_DETAILS_POST_FIX = "/ad/details";
-    private final static String KEYWORD_DETAILS_POST_FIX = "/keyword/details";
-    private final static String ASSET_DETAILS_POST_FIX = "/assets/details";
-    private final static String CONVERSION_DETAILS_POST_FIX = "/conversions/details";
-    private final static String METRICS_SAVE_FAILED = "METRICS_SAVE_FAILED";
-    private final static String METRICS_REMOVE_FAILED = "METRICS_REMOVE_FAILED";
-    private final static String DETAILS_SAVE_FAILED = "DETAILS_SAVE_FAILED";
-    private final static String DETAILS_REMOVE_FAILED = "DETAILS_REMOVE_FAILED";
-
-    private final static String START_DATE_POST_FIX = "&startDate=";
-    private final static String END_DATE_POST_FIX = "&endDate=";
-    private final static String CAMPAIGN_RES_PART = "/campaigns/";
-    private final static String ADGROUP_RES_PART = "/adGroups/";
-    private final static String CUSTOMERS_RES_PART = "customers/";
-    private final static String CAMPAIGN_ID_URL_PART = "?campaignId=";
-    private final static String ADGROUP_ID_URL_PART = "?adGroupId=";
-    private final static String RESOURCE_ID_URL_PART = "?resourceId=";
-    private final static String RESOURCE_TYPE_URL_PART = "&resourceType=";
-    private final static String PARENT_RESOURCE_ID_URL_PART = "&parentResourceId=";
-
     private final AccountRepository accountRepository;
     private final CampaignRepository campaignRepository;
     private final AdGroupRepository adGroupRepository;
@@ -66,9 +35,8 @@ public class CachingServiceImpl implements CachingService {
     private final KeywordRepository keywordRepository;
     private final AssetRepository assetRepository;
     private final ConversionRepository conversionRepository;
-
     private final MetricsRepository metricsRepository;
-
+    private final FetchingService fetchingService;
     private final ApiExceptionResolver resolver;
 
     public CachingServiceImpl(AccountRepository accountRepository,
@@ -79,6 +47,7 @@ public class CachingServiceImpl implements CachingService {
                               AssetRepository assetRepository,
                               ConversionRepository conversionRepository,
                               MetricsRepository metricsRepository,
+                              FetchingService fetchingService,
                               GAMSErrorRepository gamsErrorRepository,
                               DatabaseErrorRepository databaseErrorRepository) {
         this.accountRepository = accountRepository;
@@ -87,6 +56,7 @@ public class CachingServiceImpl implements CachingService {
         this.adRepository = adRepository;
         this.keywordRepository = keywordRepository;
         this.assetRepository = assetRepository;
+        this.fetchingService = fetchingService;
         this.conversionRepository = conversionRepository;
         this.metricsRepository = metricsRepository;
         resolver = new ApiExceptionResolver(gamsErrorRepository, databaseErrorRepository);
@@ -95,7 +65,7 @@ public class CachingServiceImpl implements CachingService {
     @Override
     public void cacheClientAccount(String customerId, String startDate, String endDate) {
         cacheClientAccountDetails(customerId);
-        cacheClientAccountMetrics(customerId, startDate, endDate);
+        //cacheClientAccountMetrics(customerId, startDate, endDate);
     }
 
     private void cacheClientAccountDetails(String customerId) {
@@ -106,19 +76,19 @@ public class CachingServiceImpl implements CachingService {
         cacheDetails(customerId, "", Constants.TYPE_ASSET);
 
         // extract a list of campaign ids from the database
-        List<Long> campaignIds = getCampaignIds(customerId);
+        List<String> campaignIds = fetchingService.getCampaignResourceIds(customerId);
 
         campaignIds.forEach(campaignId -> {
             // cache all the ad group details for each campaign
-            cacheDetails(customerId, String.valueOf(campaignId), Constants.TYPE_ADGROUP);
+            cacheDetails(customerId, campaignId, Constants.TYPE_ADGROUP);
 
             // extract a list of ad group ids from the database
-            List<Long> adGroupIds = getAdGroupIds(customerId, String.valueOf(campaignId));
+            List<String> adGroupIds = fetchingService.getAdGroupResourceIds(customerId, campaignId);
 
             adGroupIds.forEach(adGroupId -> {
                 // cache all the ads and keywords for each ad group
-                cacheDetails(customerId, String.valueOf(adGroupId), Constants.TYPE_AD);
-                cacheDetails(customerId, String.valueOf(adGroupId), Constants.TYPE_KEYWORD);
+                cacheDetails(customerId, adGroupId, Constants.TYPE_AD);
+                cacheDetails(customerId, adGroupId, Constants.TYPE_KEYWORD);
             });
         });
     }
@@ -127,27 +97,27 @@ public class CachingServiceImpl implements CachingService {
         cacheMetrics(customerId, "1", "1", startDate, endDate, Constants.TYPE_ACCOUNT);
         cacheMetrics(customerId, "1", "1", startDate, endDate, Constants.TYPE_DEVICE_ACCOUNT);
 
-        List<Long> campaignIds = getCampaignIds(customerId);
+        List<String> campaignIds = fetchingService.getCampaignResourceIds(customerId);
         campaignIds.forEach(campaignId -> {
-            cacheMetrics(customerId, String.valueOf(campaignId), "", startDate, endDate, Constants.TYPE_CAMPAIGN);
-            cacheMetrics(customerId, String.valueOf(campaignId), "", startDate, endDate, Constants.TYPE_DEVICE_CAMPAIGN);
+            cacheMetrics(customerId, campaignId, "", startDate, endDate, Constants.TYPE_CAMPAIGN);
+            cacheMetrics(customerId, campaignId, "", startDate, endDate, Constants.TYPE_DEVICE_CAMPAIGN);
 
-            List<Long> adGroupIds = getAdGroupIds(customerId, String.valueOf(campaignId));
+            List<String> adGroupIds = fetchingService.getAdGroupResourceIds(customerId, campaignId);
             adGroupIds.forEach(adGroupId -> {
-                cacheMetrics(customerId, String.valueOf(adGroupId), String.valueOf(campaignId), startDate, endDate, Constants.TYPE_ADGROUP);
-                cacheMetrics(customerId, String.valueOf(adGroupId), String.valueOf(campaignId), startDate, endDate, Constants.TYPE_DEVICE_ADGROUP);
+                cacheMetrics(customerId, adGroupId, campaignId, startDate, endDate, Constants.TYPE_ADGROUP);
+                cacheMetrics(customerId, adGroupId, campaignId, startDate, endDate, Constants.TYPE_DEVICE_ADGROUP);
 
                 // cache all the ad metrics for the date range in each adgroup
-                List<String> adIds = getAdIds(customerId, String.valueOf(adGroupId));
+                List<String> adIds = fetchingService.getAdResourceIds(customerId, adGroupId);
                 adIds.forEach(adId -> {
-                    cacheMetrics(customerId, adId, String.valueOf(adGroupId), startDate, endDate, Constants.TYPE_AD);
-                    cacheMetrics(customerId, adId, String.valueOf(adGroupId), startDate, endDate, Constants.TYPE_DEVICE_AD);
+                    cacheMetrics(customerId, adId, adGroupId, startDate, endDate, Constants.TYPE_AD);
+                    cacheMetrics(customerId, adId, adGroupId, startDate, endDate, Constants.TYPE_DEVICE_AD);
                 });
                 // cache all the keyword metrics for the date range in the adgroup
-                List<String> keywordIds = getKeywordsIds(customerId, String.valueOf(adGroupId));
+                List<String> keywordIds = fetchingService.getKeywordResourceIds(customerId, String.valueOf(adGroupId));
                 keywordIds.forEach(keywordId -> {
-                    cacheMetrics(customerId, keywordId, String.valueOf(adGroupId), startDate, endDate, Constants.TYPE_KEYWORD);
-                    cacheMetrics(customerId, keywordId, String.valueOf(adGroupId), startDate, endDate, Constants.TYPE_DEVICE_KEYWORD);
+                    cacheMetrics(customerId, keywordId, adGroupId, startDate, endDate, Constants.TYPE_KEYWORD);
+                    cacheMetrics(customerId, keywordId, adGroupId, startDate, endDate, Constants.TYPE_DEVICE_KEYWORD);
                 });
             });
         });
@@ -169,35 +139,25 @@ public class CachingServiceImpl implements CachingService {
         String datePostFix = START_DATE_POST_FIX + startDate + END_DATE_POST_FIX + endDate;
 
         if (type == Constants.TYPE_ACCOUNT) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_ACCOUNT;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_ACCOUNT);
         } else if (type == Constants.TYPE_CAMPAIGN) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_CAMPAIGN;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_CAMPAIGN);
         } else if (type == Constants.TYPE_ADGROUP) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_ADGROUP;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_ADGROUP);
         } else if (type == Constants.TYPE_AD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_AD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_AD);
         } else if (type == Constants.TYPE_KEYWORD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_KEYWORD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_KEYWORD);
         } else if (type == Constants.TYPE_DEVICE_ACCOUNT) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_ACCOUNT;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_ACCOUNT);
         } else if (type == Constants.TYPE_DEVICE_CAMPAIGN) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_CAMPAIGN;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_CAMPAIGN);
         } else if (type == Constants.TYPE_DEVICE_ADGROUP) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_ADGROUP;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_ADGROUP);
         } else if (type == Constants.TYPE_DEVICE_AD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_AD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_AD);
         } else if (type == Constants.TYPE_DEVICE_KEYWORD) {
-            url = url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
-                    datePostFix + RESOURCE_TYPE_URL_PART + CONST_DEVICE_KEYWORD;
+            url = buildUrl(url, resourceId, parentResourceId, datePostFix, CONST_DEVICE_KEYWORD);
         } else {
             throw new InvalidParameterException("An invalid type parameter has been passed.");
         }
@@ -557,49 +517,8 @@ public class CachingServiceImpl implements CachingService {
         }
     }
 
-    private List<Long> getCampaignIds(String customerId) {
-        List<Long> campaignIds = new ArrayList<>();
-        List<CampaignDocument> campaignDocumentList = new ArrayList<>(campaignRepository
-                .findAllCampaignDocumentsByCustomerId(customerId));
-
-        campaignDocumentList.forEach(campaignDocument ->
-                campaignIds.add(campaignDocument.getCampaignDetails().getCampaignId()));
-
-        return campaignIds;
-    }
-
-    private List<Long> getAdGroupIds(String customerId, String campaignId) {
-        List<Long> adGroupIds = new ArrayList<>();
-        String campaignResourceName = CUSTOMERS_RES_PART + customerId + CAMPAIGN_RES_PART + campaignId;
-        List<AdGroupDocument> adGroupDocumentList = new ArrayList<>(adGroupRepository
-                .findAllAdGroupDocumentsByCampaign(customerId, campaignResourceName));
-
-        adGroupDocumentList.forEach(adGroupDocument ->
-                adGroupIds.add(adGroupDocument.getAdGroupDetails().getAdGroupId()));
-
-        return adGroupIds;
-    }
-
-    private List<String> getAdIds(String customerId, String adGroupId) {
-        List<String> adIds = new ArrayList<>();
-        String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + adGroupId;
-        List<AdDocument> adDocumentList = new ArrayList<>(adRepository
-                .findAllAdGroupDocumentsByAdGroup(customerId, adGroupResourceName));
-
-        adDocumentList.forEach(adDocument ->
-                adIds.add(adDocument.getId()));
-
-        return adIds;
-    }
-
-    private List<String> getKeywordsIds(String customerId, String adGroupId) {
-        List<String> keywordIds = new ArrayList<>();
-        String adGroupResourceName = CUSTOMERS_RES_PART + customerId + ADGROUP_RES_PART + adGroupId;
-        List<KeywordDocument> keywordDocumentList = new ArrayList<>(keywordRepository
-                .findAllKeywordDocumentsByAdGroup(customerId, adGroupResourceName));
-
-        keywordDocumentList.forEach(adDocument -> keywordIds.add(adDocument.getId()));
-
-        return keywordIds;
+    private String buildUrl(String url, String resourceId, String parentResourceId, String datePostFix, String param) {
+        return url + METRICS_URL_POST_FIX + RESOURCE_ID_URL_PART + resourceId + PARENT_RESOURCE_ID_URL_PART + parentResourceId +
+                datePostFix + RESOURCE_TYPE_URL_PART + param;
     }
 }

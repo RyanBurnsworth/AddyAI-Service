@@ -1,6 +1,5 @@
 package com.addyai.addyaiservice.repos;
 
-import com.addyai.addyaiservice.models.documents.AdDocument;
 import com.addyai.addyaiservice.models.documents.AssetDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

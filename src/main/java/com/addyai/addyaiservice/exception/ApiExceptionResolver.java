@@ -9,9 +9,9 @@ import com.addyai.addyaiservice.utils.Logger;
 import com.addyai.addyaiservice.utils.ProxyErrorBuilder;
 
 public class ApiExceptionResolver {
-    private GAMSErrorRepository gamsErrorRepository;
+    private final GAMSErrorRepository gamsErrorRepository;
 
-    private DatabaseErrorRepository databaseErrorRepository;
+    private final DatabaseErrorRepository databaseErrorRepository;
 
     public ApiExceptionResolver(GAMSErrorRepository gamsErrorRepository, DatabaseErrorRepository databaseErrorRepository) {
         this.gamsErrorRepository = gamsErrorRepository;
