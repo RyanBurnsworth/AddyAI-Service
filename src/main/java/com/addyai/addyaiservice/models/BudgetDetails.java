@@ -41,7 +41,6 @@ public class BudgetDetails extends BaseDetails {
      * The ad delivery method. STANDARD spreads the showing of the campaign's ads
      * throughout the day to refrain from quickly exhausting the budget. ACCELERATED
      * will show ads at every chance until the budget is exhausted for the day.
-     *
      */
     private int deliveryMethod;
 

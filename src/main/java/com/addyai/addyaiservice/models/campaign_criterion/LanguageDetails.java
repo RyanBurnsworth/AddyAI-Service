@@ -20,7 +20,6 @@ public class LanguageDetails extends CriterionDetails {
      * The language code representing the target language.
      * Defaults to "languagesConstants/1000" - English
      * Format: languageConstants/{languageConstant}
-     *
      */
     private String languageCode;
 

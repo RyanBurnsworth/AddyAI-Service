@@ -3,6 +3,15 @@ package com.addyai.addyaiservice.models.assets;
 import java.util.List;
 
 public class SitelinkDetails extends AssetDetails {
+    private String description1;
+    private String description2;
+    private String linkText;
+    private String startDate;
+    private String endDate;
+    private List<String> finalUrlList;
+    private List<String> finalMobileUrlList;
+    private String finalUrlSuffix;
+
     @Override
     public long getAssetId() {
         return super.getAssetId();
@@ -42,15 +51,6 @@ public class SitelinkDetails extends AssetDetails {
     public void setAssetSource(int assetSource) {
         super.setAssetSource(assetSource);
     }
-
-    private String description1;
-    private String description2;
-    private String linkText;
-    private String startDate;
-    private String endDate;
-    private List<String> finalUrlList;
-    private List<String> finalMobileUrlList;
-    private String finalUrlSuffix;
 
     public String getDescription1() {
         return description1;

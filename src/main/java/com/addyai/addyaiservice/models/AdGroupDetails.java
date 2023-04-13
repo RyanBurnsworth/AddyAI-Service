@@ -43,13 +43,11 @@ public class AdGroupDetails extends BaseDetails {
 
     /**
      * The type of AdGroup
-     *
      */
     private int type;
 
     /**
      * The status of the adgroup
-     *
      */
     private int status;
 

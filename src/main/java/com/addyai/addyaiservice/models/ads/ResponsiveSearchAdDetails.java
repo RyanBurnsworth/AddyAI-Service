@@ -57,4 +57,34 @@ public class ResponsiveSearchAdDetails extends AdDetails {
     public void setAdStatus(int adStatus) {
         super.setAdStatus(adStatus);
     }
+
+    @Override
+    public String getAdType() {
+        return super.getAdType();
+    }
+
+    @Override
+    public void setAdType(String adType) {
+        super.setAdType(adType);
+    }
+
+    @Override
+    public String getParentResourceName() {
+        return super.getParentResourceName();
+    }
+
+    @Override
+    public void setParentResourceName(String parentResourceName) {
+        super.setParentResourceName(parentResourceName);
+    }
+
+    @Override
+    public String getType() {
+        return super.getType();
+    }
+
+    @Override
+    public void setType(String type) {
+        super.setType(type);
+    }
 }

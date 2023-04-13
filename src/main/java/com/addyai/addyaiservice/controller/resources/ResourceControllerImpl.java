@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/{customerId}/resource")
 public class ResourceControllerImpl implements ResourceController {
@@ -29,12 +31,23 @@ public class ResourceControllerImpl implements ResourceController {
     @Override
     @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping("/ad")
-    public ResponseEntity<Void> createAd(@PathVariable String customerId, @RequestBody AccountBasics.Ad ad) {
+    public ResponseEntity<Void> createAd(@PathVariable String customerId,
+                                         @RequestBody AccountBasics.Ad ad) {
         ResponseEntity<Void> response = proxyService.createAd(customerId, ad);
         if (response.getStatusCode() == HttpStatus.CREATED) {
             return ResponseEntity.accepted().build();
         } else {
             return response;
         }
+    }
+
+    @Override
+    @CrossOrigin(origins = "http://localhost:4200")
+    @PostMapping("validate/ad")
+    public ResponseEntity<List<String>> validateAdResource(@PathVariable String customerId,
+                                                           @RequestBody AccountBasics.Ad ad) {
+        List<String> errors = this.proxyService.validateAd(customerId, ad);
+
+        return new ResponseEntity<>(errors, HttpStatus.OK);
     }
 }

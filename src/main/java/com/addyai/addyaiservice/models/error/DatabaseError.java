@@ -12,23 +12,13 @@ public class DatabaseError extends InternalError {
     }
 
     @Override
-    public String getFailedUrl() {
-        return super.getFailedUrl();
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return super.getErrorMessage();
-    }
-
-    @Override
-    public int getStatusCode() {
-        return super.getStatusCode();
-    }
-
-    @Override
     public void setTimestamp(String timestamp) {
         super.setTimestamp(timestamp);
+    }
+
+    @Override
+    public String getFailedUrl() {
+        return super.getFailedUrl();
     }
 
     @Override
@@ -37,8 +27,18 @@ public class DatabaseError extends InternalError {
     }
 
     @Override
+    public String getErrorMessage() {
+        return super.getErrorMessage();
+    }
+
+    @Override
     public void setErrorMessage(String errorMessage) {
         super.setErrorMessage(errorMessage);
+    }
+
+    @Override
+    public int getStatusCode() {
+        return super.getStatusCode();
     }
 
     @Override

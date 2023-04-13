@@ -61,13 +61,11 @@ public abstract class CriterionDetails extends BaseDetails {
 
     /**
      * The identifier for the type of criterion
-     *
      */
     private int criterionType = 1;
 
     /**
      * The status of the criterion
-     *
      */
     private int status = 2;
 

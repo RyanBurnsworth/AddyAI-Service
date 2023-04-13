@@ -19,7 +19,6 @@ public class DeviceDetails extends CriterionDetails {
     /**
      * The type of device to be targeted.
      * Defaults to DeviceEnum.Device.DESKTOP_VALUE
-     *
      */
     private int deviceType;
 

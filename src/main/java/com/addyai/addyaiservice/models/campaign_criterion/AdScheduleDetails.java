@@ -19,7 +19,6 @@ public class AdScheduleDetails extends CriterionDetails {
     /**
      * The day of the week the ad scheduling is targeting.
      * Defaults to DayOfWeekEnum.DayOfWeek.THURSDAY_VALUE
-     *
      */
     private int dayOfWeek;
 
@@ -40,14 +39,12 @@ public class AdScheduleDetails extends CriterionDetails {
     /**
      * The minute the ad scheduling should start targeting.
      * Defaults to MinuteOfHourEnum.MinuteOfHour.ZERO_VALUE
-     *
      */
     private int startMinute;
 
     /**
      * The minute the ad scheduling should stop targeting..
      * Defaults to MinuteOfHourEnum.MinuteOfHour.FORTY_FIVE_VALUE
-     *
      */
     private int endMinute;
 

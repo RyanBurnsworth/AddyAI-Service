@@ -21,7 +21,10 @@ public class ControllerExceptionHandler {
     public String constraintViolationException(HttpClientErrorException.BadRequest ex) {
         Gson gson = new Gson();
         GenericErrorModel errorModel = gson.fromJson(ex.getResponseBodyAsString(), GenericErrorModel.class);
-        return errorModel.getErrorMessage();
+        if (errorModel != null && errorModel.getErrorMessage() != null)
+            return errorModel.getErrorMessage();
+        else
+            return ex.getMessage();
     }
 
     @ExceptionHandler(value = {Exception.class})

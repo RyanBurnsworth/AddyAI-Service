@@ -4,9 +4,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+
 @Getter
 @Setter
 public class AccountBasics {
+
+    List<ParentResource> campaigns;
+    List<ChildResource> adGroups;
+    List<FinalUrl> finalUrls;
+    List<Keyword> top10KeywordsByAdGroup;
+    List<Ad> topAdsByAdGroup;
+    List<Extension> extensions;
 
     @Getter
     @Setter
@@ -90,16 +98,4 @@ public class AccountBasics {
 
         String text;
     }
-
-    List<ParentResource> campaigns;
-
-    List<ChildResource> adGroups;
-
-    List<FinalUrl> finalUrls;
-
-    List<Keyword> top10KeywordsByAdGroup;
-
-    List<Ad> topAdsByAdGroup;
-
-    List<Extension> extensions;
 }

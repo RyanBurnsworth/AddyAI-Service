@@ -21,6 +21,8 @@ public abstract class AdDetails extends BaseDetails {
     @JsonProperty
     private String adName;
     @JsonProperty
+    private String parentResourceName;
+    @JsonProperty
     private String adGroupResourceName;
     @JsonProperty
     private int adStatus;
