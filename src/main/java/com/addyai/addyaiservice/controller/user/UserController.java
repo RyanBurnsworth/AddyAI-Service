@@ -5,5 +5,6 @@ import org.springframework.http.ResponseEntity;
 
 public interface UserController {
     ResponseEntity<String> setAuthorization(String code, String userId);
+
     ResponseEntity<String> setTokens(AuthResponse response);
 }

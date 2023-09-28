@@ -10,6 +10,6 @@ public interface AdGroupRepository extends MongoRepository<AdGroupDocument, Stri
     @Query("{'customerId' : '?0', 'adGroupDetails.campaignResourceName' : '?1'}")
     List<AdGroupDocument> findAllAdGroupDocumentsByCampaign(String customerId, String campaignResName);
 
-    @Query("{'customerId' : '?0', 'adGroupDetails.adGroupResourceName' : '?1'")
+    @Query("{'customerId' : '?0', 'adGroupDetails.adGroupResourceName' : '?1'}")
     AdGroupDocument findAdGroupDocumentByResourceName(String customerId, String resourceName);
 }
