@@ -6,7 +6,6 @@ import com.addyai.addyaiservice.models.documents.MetricsDocument;
 import com.addyai.addyaiservice.models.requests.MetricsByDateRequest;
 import com.addyai.addyaiservice.services.block.BlockService;
 import com.addyai.addyaiservice.services.fetch.FetchingService;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import java.util.List;
 
 import static com.addyai.addyaiservice.utils.Constants.*;
 
-@AllArgsConstructor
 @Service
 public class BlockServiceImpl implements BlockService {
     private final FetchingService fetchingService;

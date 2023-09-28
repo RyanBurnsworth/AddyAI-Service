@@ -8,10 +8,12 @@ import lombok.Setter;
 public class AccountDetails extends BaseDetails {
     String customerId;
     String resourceName;
+    String descriptiveName;
     int status;
     String currencyCode;
     String timeZone = "";
     double optimizationScore;
+    boolean isManager;
     boolean isCallReportingEnabled;
     boolean isCallConversionReportingEnabled;
     String callConversionActionResourceName;

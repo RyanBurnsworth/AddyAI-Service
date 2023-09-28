@@ -1,6 +1,7 @@
 package com.addyai.addyaiservice.services.fetch;
 
 import com.addyai.addyaiservice.models.AccountBasics;
+import com.addyai.addyaiservice.models.AccountDetails;
 import com.addyai.addyaiservice.models.documents.MetricsDocument;
 
 import java.util.List;
@@ -19,4 +20,6 @@ public interface FetchingService {
     List<String> getKeywordResourceIds(String customerId, String adGroupId);
 
     AccountBasics getAccountBasics(String customerId);
+
+    AccountDetails getAccountDetails(String customerId);
 }

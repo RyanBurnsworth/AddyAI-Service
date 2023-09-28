@@ -1,13 +1,13 @@
 package com.addyai.addyaiservice.services.fetch.impl;
 
 import com.addyai.addyaiservice.models.AccountBasics;
+import com.addyai.addyaiservice.models.AccountDetails;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
 import com.addyai.addyaiservice.models.assets.CalloutExtensionDetails;
 import com.addyai.addyaiservice.models.assets.SitelinkDetails;
 import com.addyai.addyaiservice.models.documents.*;
 import com.addyai.addyaiservice.repos.*;
 import com.addyai.addyaiservice.services.fetch.FetchingService;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -20,7 +20,6 @@ import static com.addyai.addyaiservice.utils.Constants.*;
 /**
  * Fetches documents from the MongoDB
  */
-@AllArgsConstructor
 @Service
 public class FetchingServiceImpl implements FetchingService {
     private final AccountRepository accountRepository;
@@ -31,6 +30,17 @@ public class FetchingServiceImpl implements FetchingService {
     private final ConversionRepository conversionRepository;
     private final AssetRepository assetRepository;
     private final MetricsRepository metricsRepository;
+
+    public FetchingServiceImpl(AccountRepository accountRepository, CampaignRepository campaignRepository, AdGroupRepository adGroupRepository, AdRepository adRepository, KeywordRepository keywordRepository, ConversionRepository conversionRepository, AssetRepository assetRepository, MetricsRepository metricsRepository) {
+        this.accountRepository = accountRepository;
+        this.campaignRepository = campaignRepository;
+        this.adGroupRepository = adGroupRepository;
+        this.adRepository = adRepository;
+        this.keywordRepository = keywordRepository;
+        this.conversionRepository = conversionRepository;
+        this.assetRepository = assetRepository;
+        this.metricsRepository = metricsRepository;
+    }
 
     @Override
     public List<MetricsDocument> fetchMetricsByCustomerIdAndType(String customerId, String startDate, String endDate, int type) {
@@ -114,6 +124,12 @@ public class FetchingServiceImpl implements FetchingService {
         keywordDocumentList.forEach(adDocument -> keywordIds.add(adDocument.getId()));
 
         return keywordIds;
+    }
+
+    @Override
+    public AccountDetails getAccountDetails(String customerId) {
+        AccountDocument accountDocument = accountRepository.findAccountDocumentByCustomerId(customerId);
+        return accountDocument.getAccountDetails();
     }
 
     /**
