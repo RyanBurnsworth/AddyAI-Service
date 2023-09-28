@@ -20,6 +20,10 @@ import static com.addyai.addyaiservice.utils.Constants.*;
 public class BlockServiceImpl implements BlockService {
     private final FetchingService fetchingService;
 
+    public BlockServiceImpl(FetchingService fetchingService) {
+        this.fetchingService = fetchingService;
+    }
+
     @Override
     public Block fetchUIBlock(MetricsByDateRequest request) {
         switch (request.getResourceType()) {

@@ -1,6 +1,7 @@
-package com.addyai.addyaiservice.repos.proxy;
+package com.addyai.addyaiservice.repos.proxy.impl;
 
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
+import com.addyai.addyaiservice.repos.proxy.ProxyRepository;
 import org.springframework.http.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;

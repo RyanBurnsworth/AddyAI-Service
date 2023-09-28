@@ -25,4 +25,5 @@ public class CampaignDocument {
     private String goal;
 
     private String lastUpdated;
+
 }
