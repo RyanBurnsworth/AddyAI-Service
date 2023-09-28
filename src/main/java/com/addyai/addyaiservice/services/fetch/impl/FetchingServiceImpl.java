@@ -1,8 +1,6 @@
 package com.addyai.addyaiservice.services.fetch.impl;
 
-import com.addyai.addyaiservice.models.AccountBasics;
-import com.addyai.addyaiservice.models.AccountDetails;
-import com.addyai.addyaiservice.models.CampaignDetails;
+import com.addyai.addyaiservice.models.*;
 import com.addyai.addyaiservice.models.ads.AdDetails;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
 import com.addyai.addyaiservice.models.assets.CalloutExtensionDetails;
@@ -135,9 +133,39 @@ public class FetchingServiceImpl implements FetchingService {
     }
 
     @Override
+    public List<CampaignDetails> getAllCampaignDetails(String customerId) {
+        List<CampaignDetails> campaignDetailsList = new ArrayList<>();
+        List<CampaignDocument> campaignDocumentList = campaignRepository.findAllCampaignDocumentsByCustomerId(customerId);
+
+        campaignDocumentList.forEach((campaignDocument -> {
+            campaignDetailsList.add(campaignDocument.getCampaignDetails());
+        }));
+
+        return campaignDetailsList;
+    }
+
+    @Override
     public CampaignDetails getCampaignDetails(String customerId, String campaignName) {
         CampaignDocument campaignDocument = campaignRepository.findCampaignDocumentByName(customerId, campaignName);
         return campaignDocument.getCampaignDetails();
+    }
+
+    @Override
+    public List<AdGroupDetails> getAllAdGroupDetails(String customerId, String campaignResourceName) {
+        List<AdGroupDetails> adGroupDetailsList = new ArrayList<>();
+        List<AdGroupDocument> adGroupDocumentList = this.adGroupRepository.findAllAdGroupDocumentsByCampaign(customerId, campaignResourceName);
+
+        adGroupDocumentList.forEach((adGroupDocument -> {
+            adGroupDetailsList.add(adGroupDocument.getAdGroupDetails());
+        }));
+
+        return adGroupDetailsList;
+    }
+
+    @Override
+    public AdGroupDetails getAdGroupDetails(String customerId, String adGroupResourceName) {
+        AdGroupDocument adGroupDocument = this.adGroupRepository.findAdGroupDocumentByResourceName(customerId, adGroupResourceName);
+        return adGroupDocument.getAdGroupDetails();
     }
 
     @Override
@@ -151,6 +179,18 @@ public class FetchingServiceImpl implements FetchingService {
         }));
 
         return adDetailsList;
+    }
+
+    @Override
+    public List<KeywordDetails> getKeywordDetailsByAdGroup(String customerId, String adGroupResourceName) {
+        List<KeywordDetails> keywordDetailsList = new ArrayList<>();
+        List<KeywordDocument> keywordDocumentList = this.keywordRepository.findAllKeywordDocumentsByAdGroup(customerId, adGroupResourceName);
+
+        keywordDocumentList.forEach((keywordDocument -> {
+            keywordDetailsList.add(keywordDocument.getKeywordDetails());
+        }));
+
+        return keywordDetailsList;
     }
 
     /**
