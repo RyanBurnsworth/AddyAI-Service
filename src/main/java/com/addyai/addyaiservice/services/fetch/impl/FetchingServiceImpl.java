@@ -2,6 +2,8 @@ package com.addyai.addyaiservice.services.fetch.impl;
 
 import com.addyai.addyaiservice.models.AccountBasics;
 import com.addyai.addyaiservice.models.AccountDetails;
+import com.addyai.addyaiservice.models.CampaignDetails;
+import com.addyai.addyaiservice.models.ads.AdDetails;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
 import com.addyai.addyaiservice.models.assets.CalloutExtensionDetails;
 import com.addyai.addyaiservice.models.assets.SitelinkDetails;
@@ -130,6 +132,25 @@ public class FetchingServiceImpl implements FetchingService {
     public AccountDetails getAccountDetails(String customerId) {
         AccountDocument accountDocument = accountRepository.findAccountDocumentByCustomerId(customerId);
         return accountDocument.getAccountDetails();
+    }
+
+    @Override
+    public CampaignDetails getCampaignDetails(String customerId, String campaignName) {
+        CampaignDocument campaignDocument = campaignRepository.findCampaignDocumentByName(customerId, campaignName);
+        return campaignDocument.getCampaignDetails();
+    }
+
+    @Override
+    public List<AdDetails> getAdDetails(String customerId, String adGroupResourceName) {
+        List<AdDetails> adDetailsList = new ArrayList<>();
+        List<AdDocument> adDocumentList = adRepository.findAllAdGroupDocumentsByAdGroup(customerId, adGroupResourceName);
+        System.out.println("AGRN: " + adGroupResourceName);
+        System.out.println("OUTPUT: " + adDocumentList.toString());
+        adDocumentList.forEach((adDocument -> {
+            adDetailsList.add(adDocument.getAdDetails());
+        }));
+
+        return adDetailsList;
     }
 
     /**
