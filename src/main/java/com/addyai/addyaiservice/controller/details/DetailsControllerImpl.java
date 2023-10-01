@@ -5,6 +5,7 @@ import com.addyai.addyaiservice.models.AdGroupDetails;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.KeywordDetails;
 import com.addyai.addyaiservice.models.ads.AdDetails;
+import com.addyai.addyaiservice.models.assets.AssetDetails;
 import com.addyai.addyaiservice.services.fetch.FetchingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,9 +51,18 @@ public class DetailsControllerImpl implements DetailsController {
 
     @Override
     @CrossOrigin(origins = "http://localhost:4200")
-    @GetMapping("/campaign")
+    @GetMapping("/campaign/name")
     public ResponseEntity<CampaignDetails> fetchCampaignDetailsByName(@PathVariable String customerId, @RequestParam String campaignName) {
-        CampaignDetails campaignDetails = this.fetchingService.getCampaignDetails(customerId, campaignName);
+        CampaignDetails campaignDetails = this.fetchingService.getCampaignDetailsByName(customerId, campaignName);
+        return ResponseEntity.ok(campaignDetails);
+    }
+
+    @Override
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/campaign")
+    public ResponseEntity<CampaignDetails> fetchCampaignDetailsByResourceName(@PathVariable String customerId, @RequestParam String campaignResourceName) {
+        String resourceName = "customers/" + customerId + "/campaigns/" + campaignResourceName;
+        CampaignDetails campaignDetails = this.fetchingService.getCampaignDetailsByResourceName(customerId, resourceName);
         return ResponseEntity.ok(campaignDetails);
     }
 
@@ -90,5 +100,13 @@ public class DetailsControllerImpl implements DetailsController {
         String resourceName = "customers/" + customerId + "/adGroups/" + adGroupResourceName;
         List<KeywordDetails> keywordDetailsList = this.fetchingService.getKeywordDetailsByAdGroup(customerId, resourceName);
         return ResponseEntity.ok(keywordDetailsList);
+    }
+
+    @Override
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/assets")
+    public ResponseEntity<List<AssetDetails>> fetchAssetDetails(@PathVariable String customerId) {
+        List<AssetDetails> assetDetailsList = this.fetchingService.getAssetDetails(customerId);
+        return ResponseEntity.ok(assetDetailsList);
     }
 }

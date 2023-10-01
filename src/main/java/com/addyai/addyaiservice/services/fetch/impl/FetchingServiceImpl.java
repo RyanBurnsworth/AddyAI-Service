@@ -3,6 +3,7 @@ package com.addyai.addyaiservice.services.fetch.impl;
 import com.addyai.addyaiservice.models.*;
 import com.addyai.addyaiservice.models.ads.AdDetails;
 import com.addyai.addyaiservice.models.ads.ResponsiveSearchAdDetails;
+import com.addyai.addyaiservice.models.assets.AssetDetails;
 import com.addyai.addyaiservice.models.assets.CalloutExtensionDetails;
 import com.addyai.addyaiservice.models.assets.SitelinkDetails;
 import com.addyai.addyaiservice.models.documents.*;
@@ -129,6 +130,14 @@ public class FetchingServiceImpl implements FetchingService {
     @Override
     public AccountDetails getAccountDetails(String customerId) {
         AccountDocument accountDocument = accountRepository.findAccountDocumentByCustomerId(customerId);
+        AccountDetails accountDetails = accountDocument.getAccountDetails();
+
+        List<CampaignDetails> campaignDetailsList = new ArrayList<>();
+        List<CampaignDocument> campaignDocumentList = campaignRepository.findAllCampaignDocumentsByCustomerId(customerId);
+        campaignDocumentList.forEach(campaignDocument -> {
+            campaignDetailsList.add(campaignDocument.getCampaignDetails());
+        });
+        accountDetails.setCampaignDetailsList(campaignDetailsList);
         return accountDocument.getAccountDetails();
     }
 
@@ -145,8 +154,14 @@ public class FetchingServiceImpl implements FetchingService {
     }
 
     @Override
-    public CampaignDetails getCampaignDetails(String customerId, String campaignName) {
+    public CampaignDetails getCampaignDetailsByName(String customerId, String campaignName) {
         CampaignDocument campaignDocument = campaignRepository.findCampaignDocumentByName(customerId, campaignName);
+        return campaignDocument.getCampaignDetails();
+    }
+
+    @Override
+    public CampaignDetails getCampaignDetailsByResourceName(String customerId, String campaignResourceName) {
+        CampaignDocument campaignDocument = campaignRepository.findCampaignDocumentByResourceName(customerId, campaignResourceName);
         return campaignDocument.getCampaignDetails();
     }
 
@@ -191,6 +206,18 @@ public class FetchingServiceImpl implements FetchingService {
         }));
 
         return keywordDetailsList;
+    }
+
+    @Override
+    public List<AssetDetails> getAssetDetails(String customerId) {
+        List<AssetDetails> assetDetailsList = new ArrayList<>();
+        List<AssetDocument> assetDocumentList = this.assetRepository.findAllAssetDocuments(customerId);
+
+        assetDocumentList.forEach(assetDocument -> {
+            assetDetailsList.add(assetDocument.getAssetDetails());
+        });
+
+        return assetDetailsList;
     }
 
     /**

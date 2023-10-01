@@ -12,4 +12,7 @@ public interface CampaignRepository extends MongoRepository<CampaignDocument, St
 
     @Query("{'customerId' : ?0, 'campaignDetails.campaignName' : ?1}")
     CampaignDocument findCampaignDocumentByName(String customerId, String campaignName);
+
+    @Query("{'customerId' : ?0, 'campaignDetails.campaignResourceName' : ?1}")
+    CampaignDocument findCampaignDocumentByResourceName(String customerId, String campaignResourceName);
 }

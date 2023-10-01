@@ -5,6 +5,7 @@ import com.addyai.addyaiservice.models.AdGroupDetails;
 import com.addyai.addyaiservice.models.CampaignDetails;
 import com.addyai.addyaiservice.models.KeywordDetails;
 import com.addyai.addyaiservice.models.ads.AdDetails;
+import com.addyai.addyaiservice.models.assets.AssetDetails;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -21,10 +22,15 @@ public interface DetailsController {
 
     ResponseEntity<List<CampaignDetails>> fetchAllCampaignDetails(String customerId);
     ResponseEntity<CampaignDetails> fetchCampaignDetailsByName(String customerId, String campaignName);
+
+    ResponseEntity<CampaignDetails> fetchCampaignDetailsByResourceName(String customerId, String campaignResourceName);
+
     ResponseEntity<List<AdGroupDetails>> fetchAllAdGroupDetails(String customerId, String campaignResourceName);
 
     ResponseEntity<AdGroupDetails> fetchAdGroupDetails(String customerId, String adGroupResourceName);
     ResponseEntity<List<AdDetails>> fetchAdDetailsByAdGroupResourceName(String customerId, String adGroupResourceName);
 
     ResponseEntity<List<KeywordDetails>> fetchKeywordDetailsByAdGroup(String customerId, String adGroupResourceName);
+
+    ResponseEntity<List<AssetDetails>> fetchAssetDetails(String customerId);
 }
